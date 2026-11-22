@@ -9,7 +9,18 @@ async function waitFor(fn){for(let i=0;i<100;i++){if(fn())return;await new Promi
 function page(tab='profile',role='Employee'){
  const dom=new JSDOM(`<div id="workbench-root" data-role="${role}" data-name="Alex Member"></div>`,{url:`http://localhost/workbench?tab=${tab}`,runScripts:'outside-only',pretendToBeVisual:true});opened.push(dom);const w=dom.window;
  w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','');};w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');};
- w.fetch=jest.fn(async(url,options={})=>{let data={success:true};if(url==='/api/workbench/profile'&&options.method==='GET')data={profile};if(url.startsWith('/api/workbench/tasks?'))data={tasks:[task],total:1,pages:1};if(url.startsWith('/api/workbench/attendance?'))data={records:[{_id:'record',date:'2031-06-02',status:'present',checkIn:'09:00'}]};if(url==='/api/workbench/teams'&&options.method==='GET')data={teams:[]};if(url==='/api/workbench/team-options')data={managers:[{_id:'222222222222222222222222',name:'Maya Manager'}],employees:[{_id:'333333333333333333333333',name:'Alex Member',department:'Design',managerId:'222222222222222222222222'}]};return {ok:true,status:200,json:async()=>data};});w.eval(bundle);return dom;
+ w.fetch=jest.fn(async(url,options={})=>{let data={success:true};if(url==='/api/workbench/profile'&&options.method==='GET')data={profile};if(url.startsWith('/api/workbench/tasks?'))data={tasks:[task],total:1,pages:1};if(url.startsWith('/api/workbench/attendance?'))data={records:[{_id:'record',date:'2031-06-02',status:'present',checkIn:'09:00'}]};if(url==='/api/workbench/teams'&&options.method==='GET')data={teams:[]};if(url==='/api/workbench/team-options')data={managers:[{_id:'222222222222222222222222',name:'Maya Manager'}],employees:[{_id:'333333333333333333333333',name:'Alex Member',department:'Design',managerId:'222222222222222222222222'}]};const body=JSON.stringify(data);
+return {
+  ok: true,
+  status: 200,
+  headers: {
+    get: name => String(name).toLowerCase() === 'content-type'
+      ? 'application/json'
+      : null
+  },
+  text: async () => body,
+  json: async () => JSON.parse(body)
+};});w.eval(bundle);return dom;
 }
 function button(d,text){return [...d.querySelectorAll('button')].find(b=>b.textContent.includes(text));}
 test('profile saves phone and DOB with no integrations tab',async()=>{
