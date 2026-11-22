@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/styles.css">
+<%- include('partials/premium-assets') %>
+</head>
+<body>
+<header class="rs-page-brand"><%- include('partials/brand') %></header>
+
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/logout">Logout</a>
+    </div>
+
+    <div class="container">
+        <h2>Welcome, <%= user.name %>!</h2>
+        <p>You are now logged in.</p>
+        <a href="/logout"><button style="background: red;">Logout</button></a>
+    </div>
+
+    <div class="footer">
+        <p>© 2024 Employee Management System</p>
+    </div>
+
+<%- include('partials/site-tools') %>
+</body>
+</html>

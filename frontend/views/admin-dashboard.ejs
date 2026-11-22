@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | RoleSphere</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/rolesphere-redesign.css">
+<script defer src="/js/finance-dashboard.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<script src="/js/legacy/admin-dashboard-events.js"></script>
+<%- include('partials/premium-assets') %>
+<link rel="stylesheet" href="/css/finance-dashboard.css">
+    <link rel="stylesheet" href="/css/rolesphere-redesign.css?v=directory-fix-2">
+</head>
+<body class="rs-dashboard rs-finance-dashboard rs-admin-dashboard bg-gray-50 h-screen flex overflow-hidden">
+<%- include('partials/finance-mobile') %>
+    <aside id="rs-role-sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
+        <div class="rs-sidebar-brand"><%- include('partials/brand') %></div>
+        <nav class="flex-1 overflow-y-auto py-4">
+        <!-- ══ ANNOUNCEMENT BELL — pinned top of sidebar ══════════════════ -->
+        <!-- IMPORTANT: This sits OUTSIDE <nav> so it never scrolls away     -->
+        <div class="relative border-b border-gray-100">
+            <button
+                id="ann-toggle-btn"
+                data-rs-click="admin-dashboard-0"
+                class="w-full flex items-center justify-between px-4 py-3 hover:bg-blue-50 transition-all group"
+                title="Announcements"
+            >
+                <div class="flex items-center gap-3">
+                    <!-- Megaphone icon -->
+                    <div class="relative">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                        </svg>
+                        <!-- Unread badge — hidden when count is 0 -->
+                        <span
+                            id="ann-badge"
+                            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 hidden"
+                        >0</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700 group-hover:text-primary-600">Announcements</span>
+                </div>
+                <!-- Chevron that rotates when panel opens -->
+                <svg id="ann-chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <!-- ── Drop-down panel ────────────────────────────────────────── -->
+            <div
+                id="ann-panel"
+                class="hidden bg-blue-50 border-t border-blue-100 max-h-72 overflow-y-auto"
+            >
+                <!-- Header row inside panel -->
+                <div class="flex items-center justify-between px-4 py-2 border-b border-blue-100">
+                    <span class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Latest Announcements</span>
+                    <button data-rs-click="admin-dashboard-1" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark all read</button>
+                </div>
+                <!-- List of announcements -->
+                <div id="ann-list" class="divide-y divide-blue-100">
+                    <p class="text-xs text-gray-400 px-4 py-3">Loading…</p>
+                </div>
+            </div>
+        </div>
+        <!-- ══ END ANNOUNCEMENT BELL ════════════════════════════════════════ -->
+
+            <div class="px-4 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Overview</div>
+            <a href="/api/admin/dashboard" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </a>
+            <div class="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</div>
+            <a href="/api/admin/add-hr" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                Add HR
+            </a>
+            <a href="/api/admin/add-manager" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Add Manager
+            </a>
+            <a href="/api/admin/pending-approvals" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Pending Approvals
+            </a>
+            <a href="/admin/hr-attendance" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                HR Attendance
+            </a>
+            <a href="/api/admin/announcements" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Announcements
+            </a>
+            <div class="px-4 mt-6 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Reports</div>
+            <a href="/admin/reports" class="flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Export Reports
+            </a>
+            <a href="/api/admin/logout" class="flex items-center gap-3 px-6 py-3 text-red-600 hover:bg-red-50 transition-all">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Logout
+            </a>
+        </nav>
+    <a class="rs-workbench-nav" href="/workbench">Profile, calendar & teams <span aria-hidden="true">↗</span></a><div class="finance-sidebar-footer"><span class="finance-sidebar-status"></span><span>Connected workspace<small>Your people. Your sphere.</small></span></div></aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+<div id="rs-admin-background" aria-hidden="true"></div>
+        <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 z-30">
+            <div class="flex items-center gap-4">
+                <h2 class="text-xl font-bold text-gray-800">Dashboard Overview</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                <div class="text-right hidden sm:block">
+                    <div class="text-sm font-bold text-gray-800"><%= admin && admin.name ? admin.name : "Admin" %></div>
+                    <div class="text-xs text-gray-500">Admin</div>
+                </div>
+                <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-bold border-2 border-white shadow-sm">
+                    <%= (admin && admin.name ? admin.name.charAt(0) : 'A') %>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-6">
+            <% if (message && message.trim() !== "") { %>
+                <div class="p-4 bg-yellow-50 text-yellow-800 rounded-lg border border-yellow-200"><%= message %></div>
+            <% } %>
+
+            <div class="finance-welcome"><div><p class="finance-eyebrow">ADMIN WORKSPACE</p><h1>Welcome back, <%= admin.name %><span>.</span></h1><p>Here’s what’s happening in your sphere today.</p></div><time datetime="<%= new Date().toISOString().slice(0,10) %>"><%= new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date()) %></time></div>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6 finance-kpis">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-500 text-sm font-medium">Total Employees</h3>
+                        <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900"><%= totalEmployees %></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-500 text-sm font-medium">Managers</h3>
+                        <div class="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900"><%= managerList ? managerList.length : 0 %></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-500 text-sm font-medium">HRs</h3>
+                        <div class="p-2 bg-green-50 text-green-600 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900"><%= hrList ? hrList.length : 0 %></div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-gray-500 text-sm font-medium">Pending Approvals</h3>
+                        <div class="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        </div>
+                    </div>
+                    <div class="text-3xl font-bold text-gray-900"><%= pendingApprovals %></div>
+                </div>
+            </div>
+
+            <%- include('partials/finance-pulse') %>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-gray-900">HR List</h3>
+                        <a href="/api/admin/add-hr" class="text-sm text-primary-600 hover:underline">Add HR</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <% if (hrList && hrList.length) { %>
+                                    <% hrList.forEach(function(hr) { %>
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= hr.name %></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= hr.email %></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="/api/admin/edit-hr/<%= hr._id %>" class="text-primary-600 hover:text-primary-900 mr-3">Edit</a>
+                                                <form method="post" action="/api/admin/delete-hr/<%= hr._id %>" style="display:inline"><button type="submit"   class="text-red-600 hover:text-red-900">Delete</button></form>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">No HRs found.</td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="text-lg font-bold text-gray-900">Manager List</h3>
+                        <a href="/api/admin/add-manager" class="text-sm text-primary-600 hover:underline">Add Manager</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                <% if (managerList && managerList.length) { %>
+                                    <% managerList.forEach(function(m) { %>
+                                        <tr class="hover:bg-gray-50">
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= m.name %></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= m.email %></td>
+                                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <a href="/api/admin/edit-manager/<%= m._id %>" class="text-primary-600 hover:text-primary-900 mr-3">Edit</a>
+                                                <form method="post" action="/api/admin/delete-manager/<%= m._id %>" style="display:inline"><button type="submit"   class="text-red-600 hover:text-red-900">Delete</button></form>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">No managers found.</td></tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900">Employee List</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full rs-directory-table">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <% if (employees && employees.length) { %>
+                                <% employees.forEach(function(emp) { %>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"><%= emp.name %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600"><%= emp.email %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <form method="post" action="/api/admin/delete-employee/<%= emp._id %>" style="display:inline"><button type="submit"   class="text-red-600 hover:text-red-900">Delete</button></form>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">No employees found.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900">HR Leave Requests</h3>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dates</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reason</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">
+                            <% if (hrLeaves && hrLeaves.length) { %>
+                                <% hrLeaves.forEach(function(leave) { %>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900"><%= leave.startDate %> - <%= leave.endDate %></td>
+                                        <td class="px-6 py-4 text-sm text-gray-600"><%= leave.reason %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="px-2 py-1 text-xs font-semibold rounded-full <%= leave.status === 'Approved' ? 'bg-green-100 text-green-800' : leave.status === 'Rejected' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800' %>"><%= leave.status %></span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                            <button class="text-green-600 hover:text-green-900 mr-3" data-rs-click="admin-dashboard-2" data-rs-arg-0="<%= leave._id %>">Approve</button>
+                                            <button class="text-red-600 hover:text-red-900" data-rs-click="admin-dashboard-3" data-rs-arg-0="<%= leave._id %>">Reject</button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No HR leave requests.</td></tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Manager → Employee Tasks</h3>
+                        <div class="h-64">
+                            <canvas id="managerEmployeeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">HR → Manager Tasks</h3>
+                        <div class="h-64">
+                            <canvas id="hrManagerChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100">
+                    <div class="p-6">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Employee Reports</h3>
+                        <div class="h-64">
+                            <canvas id="employeeReportsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                    <h3 class="text-lg font-bold text-gray-900">Announcements</h3>
+                    <a href="/api/admin/announcements" class="text-sm text-primary-600 hover:underline">Manage</a>
+                </div>
+                <div class="divide-y divide-gray-100">
+                    <% if (announcements && announcements.length) { %>
+                        <% announcements.forEach(function(a) { %>
+                            <div class="p-6 hover:bg-gray-50 transition">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h4 class="text-sm font-bold text-gray-900"><%= a.title %></h4>
+                                        <p class="text-xs text-gray-500"><%= new Date(a.date).toLocaleString() %></p>
+                                    </div>
+                                </div>
+                                <p class="mt-3 text-sm text-gray-700"><%= a.message %></p>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="p-6 text-center text-gray-500">No announcements available.</div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script>
+        async function updateLeaveStatus(leaveId, status) {
+            try {
+                const res = await fetch('/api/admin/updateLeaveStatus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leaveId, status })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Failed to update leave: ' + (data.error || 'Unknown error'));
+                }
+            } catch (e) {
+                alert('Error updating leave status');
+            }
+        }
+        const managerCtx = document.getElementById('managerEmployeeChart');
+        if (managerCtx && typeof Chart !== 'undefined') {
+            const d = <%- jsonForScript(roleTaskStatusData?.managerEmployee || { pending: 0, submitted: 0, approved: 0, rejected: 0 }) %>;
+            new Chart(managerCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Submitted', 'Approved', 'Rejected'],
+                    datasets: [{
+                        data: [d.pending, d.submitted, d.approved, d.rejected],
+                        backgroundColor: ['#f59e0b','#3b82f6','#10b981','#ef4444']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+        const hrMgrCtx = document.getElementById('hrManagerChart');
+        if (hrMgrCtx && typeof Chart !== 'undefined') {
+            const d = <%- jsonForScript(roleTaskStatusData?.hrManager || { pending: 0, submitted: 0, approved: 0, rejected: 0 }) %>;
+            new Chart(hrMgrCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Submitted', 'Approved', 'Rejected'],
+                    datasets: [{
+                        data: [d.pending, d.submitted, d.approved, d.rejected],
+                        backgroundColor: ['#f59e0b','#3b82f6','#10b981','#ef4444']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+        const empRepCtx = document.getElementById('employeeReportsChart');
+        if (empRepCtx && typeof Chart !== 'undefined') {
+            const d = <%- jsonForScript(employeeReportsStatusData || { pending: 0, approved: 0, rejected: 0 }) %>;
+            new Chart(empRepCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Pending', 'Approved', 'Rejected'],
+                    datasets: [{
+                        data: [d.pending, d.approved, d.rejected],
+                        backgroundColor: ['#f59e0b','#10b981','#ef4444']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+    </script>
+
+    <!-- ══ ANNOUNCEMENT SYSTEM JS ══════════════════════════════════════════ -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    (function() {
+        /* ── Socket connection ─────────────────────────────────────────── */
+        const _socket = typeof io !== 'undefined' ? io() : null;
+        let _annPanelOpen = false;
+
+        /* ── On socket connect: request unread count immediately ──────── */
+        if (_socket) {
+            _socket.on('connect', function() {
+                _socket.emit('notifications:get_count');
+            });
+
+            /* Real-time: new announcement arrived ─────────────────────── */
+            _socket.on('announcement:new', function(ann) {
+                // Increment badge
+                const badge = document.getElementById('ann-badge');
+                if (badge) {
+                    const cur = parseInt(badge.textContent) || 0;
+                    _setBadge(cur + 1);
+                }
+                // Prepend to list if panel is open
+                if (_annPanelOpen) {
+                    _prependAnnouncement(ann);
+                } else {
+                    // Reload list next time panel opens
+                    _annListDirty = true;
+                }
+                // Flash button
+                const btn = document.getElementById('ann-toggle-btn');
+                if (btn) {
+                    btn.classList.add('bg-blue-100');
+                    setTimeout(function() { btn.classList.remove('bg-blue-100'); }, 1500);
+                }
+            });
+        }
+
+        let _annListDirty = true; // force first load
+
+        /* ── Toggle panel open/close ───────────────────────────────────── */
+        window.toggleAnnouncementPanel = function() {
+            _annPanelOpen = !_annPanelOpen;
+            const panel   = document.getElementById('ann-panel');
+            const chevron = document.getElementById('ann-chevron');
+            if (!panel) return;
+
+            if (_annPanelOpen) {
+                panel.classList.remove('hidden');
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+                if (_annListDirty) _loadAnnouncementList();
+                // Mark seen after 1 second (gives user time to read)
+                setTimeout(markAllAnnouncementsSeen, 1000);
+            } else {
+                panel.classList.add('hidden');
+                if (chevron) chevron.style.transform = '';
+            }
+        };
+
+        /* ── Load announcements from API ───────────────────────────────── */
+        async function _loadAnnouncementList() {
+            const list = document.getElementById('ann-list');
+            if (!list) return;
+            list.innerHTML = '<p class="text-xs text-gray-400 px-4 py-3">Loading…</p>';
+            try {
+                const res  = await fetch('/api/overview/announcements');
+                const data = await res.json();
+                if (!data.success || !data.announcements || data.announcements.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-500 px-4 py-3 text-center">No announcements yet.</p>';
+                    return;
+                }
+                list.innerHTML = data.announcements.map(function(a) {
+                    return _annCard(a);
+                }).join('');
+                _annListDirty = false;
+            } catch(e) {
+                list.innerHTML = '<p class="text-xs text-red-400 px-4 py-3">Failed to load.</p>';
+            }
+        }
+
+        /* ── Prepend a single new announcement card ────────────────────── */
+        function _prependAnnouncement(ann) {
+            const list = document.getElementById('ann-list');
+            if (!list) return;
+            // Remove "no announcements" placeholder if present
+            const placeholder = list.querySelector('p');
+            if (placeholder) placeholder.remove();
+            const div = document.createElement('div');
+            div.innerHTML = _annCard(ann);
+            list.insertBefore(div.firstChild, list.firstChild);
+        }
+
+        /* ── Build HTML card for one announcement — clickable ─────────── */
+        function _annCard(a) {
+            const dateStr = a.date ? new Date(a.date).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) : '';
+            const titleEsc   = _esc(a.title);
+            const msgEsc     = _esc(a.message);
+            const attachHtml = a.attachmentUrl
+                ? '<a href="' + a.attachmentUrl + '" target="_blank" class="mt-2 inline-flex items-center gap-1 text-primary-600 hover:underline text-xs" data-rs-click="admin-dashboard-4"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>View Attachment</a>'
+                : '';
+            const dataAttach = a.attachmentUrl ? ' data-attach="' + _esc(a.attachmentUrl) + '"' : '';
+            return '<div class="px-4 py-3 hover:bg-blue-100 transition-colors cursor-pointer" ' +
+                       'data-rs-click="admin-dashboard-5" ' +
+                       'data-title="' + titleEsc + '" ' +
+                       'data-msg="' + msgEsc + '" ' +
+                       'data-date="' + dateStr + '"' + dataAttach + '>' +
+                       '<p class="text-xs font-bold text-gray-800 leading-snug">' + titleEsc + '</p>' +
+                       '<p class="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">' + msgEsc + '</p>' +
+                       attachHtml +
+                       '<p class="text-xs text-gray-400 mt-1">' + dateStr + '</p>' +
+                   '</div>';
+        }
+
+        window.openAnnModal = function(el) {
+            const title  = el.getAttribute('data-title')  || '';
+            const msg    = el.getAttribute('data-msg')    || '';
+            const date   = el.getAttribute('data-date')   || '';
+            const attach = el.getAttribute('data-attach') || '';
+            document.getElementById('ann-modal-title').textContent = title;
+            document.getElementById('ann-modal-msg').textContent   = msg;
+            document.getElementById('ann-modal-date').textContent  = date;
+            const attachEl = document.getElementById('ann-modal-attach');
+            if (attach) { attachEl.href = attach; attachEl.classList.remove('hidden'); }
+            else { attachEl.classList.add('hidden'); }
+            document.getElementById('ann-modal').classList.remove('hidden');
+        };
+
+        window.closeAnnModal = function() {
+            document.getElementById('ann-modal').classList.add('hidden');
+        };
+
+        /* ── Mark all announcements as seen (resets badge) ─────────────── */
+        window.markAllAnnouncementsSeen = async function() {
+            try {
+                await fetch('/api/overview/announcements/mark-seen', { method: 'POST' });
+                _setBadge(0);
+            } catch(e) {}
+        };
+
+        /* ── Set badge count ───────────────────────────────────────────── */
+        function _setBadge(n) {
+            const badge = document.getElementById('ann-badge');
+            if (!badge) return;
+            if (n > 0) {
+                badge.textContent = n > 99 ? '99+' : n;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+            }
+        }
+
+        /* ── HTML-escape helper ────────────────────────────────────────── */
+        function _esc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        /* ── Poll unread count on page load (fallback if socket fails) ─── */
+        async function _pollUnreadCount() {
+            try {
+                const res  = await fetch('/api/overview/announcements/unread-count');
+                const data = await res.json();
+                if (data.success) _setBadge(data.count);
+            } catch(e) {}
+        }
+
+        /* ── Init ──────────────────────────────────────────────────────── */
+        document.addEventListener('DOMContentLoaded', function() {
+            _pollUnreadCount();
+        });
+
+    })();
+    </script>
+    <!-- ══ END ANNOUNCEMENT SYSTEM JS ══════════════════════════════════════ -->
+
+<!-- Announcement Detail Modal -->
+<div id="ann-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                </div>
+                <h3 class="text-base font-bold text-gray-900">Announcement</h3>
+            </div>
+            <button data-rs-click="admin-dashboard-6" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <h2 id="ann-modal-title" class="text-xl font-bold text-gray-900 mb-3"></h2>
+            <p id="ann-modal-msg" class="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap"></p>
+            <a id="ann-modal-attach" href="#" target="_blank"
+               class="hidden inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                View Attachment
+            </a>
+            <p id="ann-modal-date" class="text-xs text-gray-400"></p>
+        </div>
+    </div>
+</div>
+<%- include('partials/site-tools') %>
+<div id="rs-dashboard-experience" data-login-token="<%= typeof welcome !== 'undefined' ? welcome.token : '' %>" data-name="<%= typeof welcome !== 'undefined' ? welcome.name : '' %>"></div>
+</body>
+</html>

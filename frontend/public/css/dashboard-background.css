@@ -1,0 +1,25 @@
+/* Loaded only by HR, Manager and Employee dashboards. */
+body.rs-dot-dashboard main {
+  position: relative;
+  isolation: isolate;
+  background: #fafbfc;
+}
+body.rs-dot-dashboard #rs-dashboard-dots {
+  position: fixed;
+  inset: 0 0 0 264px;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+/* Fade the same 24px SVG grid toward the viewport edges, responsively. */
+.rs-dot-dashboard .rs-dashboard-dot-pattern {
+  -webkit-mask-image: radial-gradient(ellipse 85% 85% at 50% 40%, white 30%, transparent 100%);
+  mask-image: radial-gradient(ellipse 85% 85% at 50% 40%, white 30%, transparent 100%);
+}
+body.rs-dot-dashboard main > .rs-dot-scroll { background: transparent; }
+@media (max-width: 767px) {
+  body.rs-dot-dashboard #rs-dashboard-dots { left: 0; }
+}
+@media print {
+  #rs-dashboard-dots { display: none; }
+}

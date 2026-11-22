@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - RoleSphere</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/rolesphere-redesign.css">
+    <link rel="stylesheet" href="/css/dashboard-background.css">
+    <script defer src="/js/dashboard-background.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+
+    <style>
+        /* Toast Notification */
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 50; }
+        .toast {
+            min-width: 250px;
+            background: white;
+            border-left: 4px solid;
+            padding: 16px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateX(100%);
+            transition: transform 0.3s ease-in-out;
+            display: flex;
+            align-items: center;
+        }
+        .toast.show { transform: translateX(0); }
+        .toast-success { border-color: #10B981; }
+        .toast-error { border-color: #EF4444; }
+        .toast-info { border-color: #3B82F6; }
+    </style>
+<script src="/js/legacy/employee-dashboard-events.js"></script>
+<%- include('partials/premium-assets') %>
+<link rel="stylesheet" href="/css/finance-dashboard.css"><script defer src="/js/finance-dashboard.js"></script>
+</head>
+<body class="rs-dashboard rs-finance-dashboard rs-dot-dashboard bg-gray-50 font-sans antialiased h-screen flex overflow-hidden">
+<%- include('partials/finance-mobile') %>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Sidebar -->
+    <aside id="rs-role-sidebar" class="bg-white w-64 border-r border-gray-200 flex flex-col hidden md:flex">
+        <div class="rs-sidebar-brand"><%- include('partials/brand') %></div>
+
+        <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+        <!-- ══ ANNOUNCEMENT BELL — pinned top of sidebar ══════════════════ -->
+        <!-- IMPORTANT: This sits OUTSIDE <nav> so it never scrolls away     -->
+        <div class="relative border-b border-gray-100">
+            <button
+                id="ann-toggle-btn"
+                data-rs-click="employee-dashboard-0"
+                class="w-full flex items-center justify-between px-4 py-3 hover:bg-blue-50 transition-all group"
+                title="Announcements"
+            >
+                <div class="flex items-center gap-3">
+                    <!-- Megaphone icon -->
+                    <div class="relative">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                        </svg>
+                        <!-- Unread badge — hidden when count is 0 -->
+                        <span
+                            id="ann-badge"
+                            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 hidden"
+                        >0</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700 group-hover:text-primary-600">Announcements</span>
+                </div>
+                <!-- Chevron that rotates when panel opens -->
+                <svg id="ann-chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <!-- ── Drop-down panel ────────────────────────────────────────── -->
+            <div
+                id="ann-panel"
+                class="hidden bg-blue-50 border-t border-blue-100 max-h-72 overflow-y-auto"
+            >
+                <!-- Header row inside panel -->
+                <div class="flex items-center justify-between px-4 py-2 border-b border-blue-100">
+                    <span class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Latest Announcements</span>
+                    <button data-rs-click="employee-dashboard-1" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark all read</button>
+                </div>
+                <!-- List of announcements -->
+                <div id="ann-list" class="divide-y divide-blue-100">
+                    <p class="text-xs text-gray-400 px-4 py-3">Loading…</p>
+                </div>
+            </div>
+        </div>
+        <!-- ══ END ANNOUNCEMENT BELL ════════════════════════════════════════ -->
+
+            <button data-rs-click="employee-dashboard-2" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Dashboard
+            </button>
+            <button data-rs-click="employee-dashboard-3" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Profile
+            </button>
+            <button data-rs-click="employee-dashboard-4" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                Assigned Tasks
+            </button>
+            <button data-rs-click="employee-dashboard-5" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                Daily Progress Reports
+            </button>
+            <button data-rs-click="employee-dashboard-6" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10a2 2 0 002 2h4a2 2 0 002-2V11M9 11h6"></path></svg>
+                Apply Leave
+            </button>
+            <button data-rs-click="employee-dashboard-7" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                Attendance
+            </button>
+            <button data-rs-click="employee-dashboard-8" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18M16 17l4 4m0 0l-4 4m4-4H3"></path></svg>
+                Request Transfer
+            </button>
+            <button data-rs-click="employee-dashboard-9" class="nav-item w-full flex items-center px-3 py-2 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors group">
+                <svg class="w-5 h-5 mr-3 text-gray-400 group-hover:text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                My Reviews
+            </button>
+
+        </nav>
+
+        <div class="p-4 border-t border-gray-200">
+            <a href="/employee/logout" class="flex items-center px-3 py-2 text-sm font-medium text-red-600 rounded-lg hover:bg-red-50 transition-colors">
+                <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Logout
+            </a>
+        </div>
+    <a class="rs-workbench-nav" href="/workbench">Profile, calendar & teams <span aria-hidden="true">↗</span></a><div class="finance-sidebar-footer"><span class="finance-sidebar-status"></span><span>Connected workspace<small>Your people. Your sphere.</small></span></div></aside>
+
+    <!-- Mobile Header -->
+    <div class="md:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 h-16 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+             <div class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">R</div>
+             <span class="font-bold text-lg text-gray-900">Employee</span>
+        </div>
+        <button data-rs-click="employee-dashboard-10" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+        </button>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 mt-16 md:mt-0">
+        <div id="rs-dashboard-dots" aria-hidden="true"></div>
+        <div class="max-w-6xl mx-auto">
+
+            <!-- Transfer Request Section -->
+            <div id="transferSection" class="section-content hidden">
+              <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-2xl">
+                <h2 class="text-xl font-bold text-gray-900 mb-1">Request Manager Transfer</h2>
+                <p class="text-sm text-gray-500 mb-6">Submit a request to be moved to a different manager's team. Your current manager will review it first, then HR will assign you.</p>
+
+                <!-- Status card — shown if request already exists -->
+                <div id="transferStatusCard" class="hidden bg-blue-50 border border-blue-200 rounded-xl p-5 mb-5">
+                  <p class="text-sm font-bold text-blue-800 mb-3">📋 Your Transfer Request</p>
+                  <div class="space-y-2 text-sm text-blue-700">
+                    <p>Reason submitted: <span id="transferReasonDisplay" class="italic text-gray-700"></span></p>
+                    <p>Manager decision: <span id="transferManagerStatus" class="font-bold"></span></p>
+                    <p id="transferManagerNoteRow" class="hidden text-xs text-gray-600">Manager note: <span id="transferManagerNote"></span></p>
+                    <p>HR status: <span id="transferHRStatus" class="font-bold"></span></p>
+                    <p id="transferNewManagerRow" class="hidden text-xs text-green-700 font-semibold">✅ New Manager: <span id="transferNewManager"></span></p>
+                  </div>
+                </div>
+
+                <!-- Form — hidden if pending request exists -->
+                <div id="transferFormWrapper">
+                  <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Why do you want to transfer? <span class="text-red-500">*</span></label>
+                    <textarea id="transferReasonInput" rows="4"
+                      placeholder="Describe your reason clearly (min 10 characters)..."
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 resize-none"></textarea>
+                  </div>
+                  <div class="flex gap-3">
+                    <button data-rs-click="employee-dashboard-11"
+                      class="px-5 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-lg hover:bg-indigo-700 transition">
+                      Submit Request
+                    </button>
+                  </div>
+                  <p id="transferFormMsg" class="text-xs mt-2 hidden"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Removal Notice Banner (hidden by default, shown via JS) -->
+            <div id="removalNoticeBanner" class="hidden mb-6">
+                <div class="bg-red-50 border border-red-200 rounded-xl p-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="text-base font-bold text-red-800 mb-1">You have been removed from your team</h3>
+                            <p class="text-sm text-red-600 mb-1">Manager: <span id="removalManagerName" class="font-semibold"></span></p>
+                            <p class="text-sm text-red-700 mb-4">Reason: <span id="removalReasonText" class="italic"></span></p>
+
+                            <!-- Accepted State -->
+                            <div id="removalAcceptedMsg" class="hidden bg-green-50 border border-green-200 rounded-lg p-3 text-sm text-green-700 font-medium">
+                                ✅ You have accepted the removal.
+                            </div>
+
+                            <!-- Complaint Submitted State -->
+                            <div id="complaintSubmittedMsg" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                <p class="text-sm text-blue-700 font-medium">📨 Your complaint has been submitted to HR.</p>
+                                <p class="text-xs text-blue-500 mt-1">Status: <span id="complaintStatusText" class="font-semibold"></span></p>
+                                <p id="hrNoteSection" class="hidden text-xs text-gray-600 mt-2">HR Note: <span id="hrNoteText" class="italic"></span></p>
+                            </div>
+
+                            <!-- Action Buttons (shown if no action taken yet) -->
+                            <div id="removalActionButtons" class="flex flex-col sm:flex-row gap-3">
+                                <button data-rs-click="employee-dashboard-12" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-gray-600 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                    Accept Removal
+                                </button>
+                                <button data-rs-click="employee-dashboard-13" class="flex items-center justify-center gap-2 px-5 py-2.5 bg-red-600 text-white text-sm font-semibold rounded-lg hover:bg-red-700 transition">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                    File Complaint to HR
+                                </button>
+                            </div>
+
+                            <!-- Complaint Form (hidden until button clicked) -->
+                            <div id="complaintFormContainer" class="hidden mt-4 bg-white border border-red-100 rounded-xl p-5">
+                                <h4 class="text-sm font-bold text-gray-800 mb-3">File a Complaint to HR</h4>
+                                <form id="complaintForm" enctype="multipart/form-data">
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Your Complaint <span class="text-red-500">*</span></label>
+                                        <textarea id="complaintTextInput" name="complaintText" rows="4" placeholder="Describe why you disagree with this removal decision..." class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-400 focus:border-red-400 resize-none"></textarea>
+                                    </div>
+                                    <div class="mb-4">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Attach Supporting File (optional)</label>
+                                        <%- include('partials/upload-field', { inputId:'complaintAttachment', inputName:'attachment', label:'Add supporting documents', accept:'.jpg,.jpeg,.pdf', required:false, changeHandler:'' }) %><p id="selectedFileName" hidden></p>
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button type="button" data-rs-click="employee-dashboard-14" class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-medium transition">Cancel</button>
+                                        <button type="button" data-rs-click="employee-dashboard-15" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm font-bold transition">Submit Complaint</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="welcomeSection" class="section-content"><div class="finance-welcome"><div><p class="finance-eyebrow">EMPLOYEE WORKSPACE</p><h1>Welcome back, <span id="welcomeName"><%= employee.name %></span><span>.</span></h1><p>Here’s what’s happening in your sphere today.</p></div><time><%= new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date()) %></time></div>
+<%- include('partials/finance-pulse') %>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <!-- Stats Column -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Manager Info Card -->
+                        <div id="managerInfoCard" class="hidden bg-white rounded-xl shadow-sm border border-indigo-100 p-5 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-indigo-400 uppercase tracking-wide">Your Manager</p>
+                                <p class="text-lg font-bold text-gray-900" id="managerNameDisplay">—</p>
+                                <p class="text-xs text-gray-500 mt-0.5">You are part of this manager's team. Tasks will be assigned through your dashboard.</p>
+                            </div>
+                        </div>
+                        <div id="noManagerCard" class="hidden bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex items-center gap-4">
+                            <div class="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Manager</p>
+                                <p class="text-base font-semibold text-gray-500">Not assigned yet</p>
+                                <p class="text-xs text-gray-400 mt-0.5">A manager will be assigned to you shortly.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transform hover:scale-105 transition-transform duration-200">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-gray-500 text-sm font-medium">Pending Tasks</h3>
+                                    <span class="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">Action Needed</span>
+                                </div>
+                                <p class="text-3xl font-bold text-gray-900" id="pendingTasksCount">-</p>
+                            </div>
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 transform hover:scale-105 transition-transform duration-200">
+                                 <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-gray-500 text-sm font-medium">Reports Submitted</h3>
+                                    <span class="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">This Month</span>
+                                </div>
+                                <p class="text-3xl font-bold text-gray-900" id="submittedReportsCount">-</p>
+                            </div>
+                        </div>
+
+                        <!-- New Widgets Row -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                            <!-- Announcements Widget -->
+                            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                                <div class="flex items-center justify-between mb-4">
+                                    <h3 class="text-lg font-bold text-gray-900">Announcements</h3>
+                                    <span class="text-xs text-primary-600 font-medium cursor-pointer hover:underline">View All</span>
+                                </div>
+                                <div class="space-y-4" id="announcementsList">
+                                    <p class="text-sm text-gray-400">Loading...</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Chart Column -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900 mb-4">Your Task Progress</h3>
+                        <div class="h-64 flex items-center justify-center">
+                            <canvas id="employeeTaskChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile Section -->
+            <div id="profileSection" class="section-content hidden">
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                        <h2 class="text-xl font-bold text-gray-900">My Profile</h2>
+                        <button data-rs-click="employee-dashboard-16" class="text-primary-600 hover:text-primary-700 text-sm font-medium">Edit Profile</button>
+                    </div>
+
+                    <!-- Profile Photo Upload -->
+                    <div class="p-6 border-b border-gray-100 flex items-center gap-4">
+                        <img id="profilePreview" src="<%= employee.profilePhoto || '' %>"
+                             data-rs-error="employee-dashboard-17"
+                             style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:2px solid #e5e7eb;">
+                        <form id="photoUploadForm" enctype="multipart/form-data" class="rs-photo-upload-form">
+                            <%- include('partials/upload-field', { inputId:'photoInput', inputName:'profilePhoto', label:'Add a profile photo', accept:'.jpg,.jpeg,.png,.gif,.webp', required:false, changeHandler:'' }) %>
+                            <button type="submit" class="px-3 py-1.5 bg-primary-600 text-white text-sm rounded-lg hover:bg-primary-700">Upload Photo</button>
+                        </form>
+                    </div>
+
+                    <!-- View Profile -->
+                    <div id="viewProfile" class="p-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">Full Name</label>
+                                <p class="text-lg font-medium text-gray-900" id="profileName"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">Email Address</label>
+                                <p class="text-lg font-medium text-gray-900" id="profileEmail"></p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">Phone Number</label>
+                                <p class="text-lg font-medium text-gray-900" id="profilePhone">-</p>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-500 mb-1">Department</label>
+                                <p class="text-lg font-medium text-gray-900" id="profileDepartment">-</p>
+                            </div>
+                             <div class="md:col-span-2">
+                                <label class="block text-sm font-medium text-gray-500 mb-1">Address</label>
+                                <p class="text-lg font-medium text-gray-900" id="profileAddress">-</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Edit Profile Form -->
+                    <div id="editProfileForm" class="p-6 hidden">
+                        <form data-rs-submit="employee-dashboard-18" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
+                                    <input type="text" id="editName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                    <input type="email" id="editEmail" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+                                    <input type="text" id="editPhone" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Department</label>
+                                    <input type="text" id="editDepartment" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                                <div class="md:col-span-2">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                                    <input type="text" id="editAddress" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500">
+                                </div>
+                            </div>
+                            <div class="flex justify-end gap-3">
+                                <button type="button" data-rs-click="employee-dashboard-19" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                                <button type="submit" class="px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assigned Tasks Section -->
+            <div id="assignedTasksSection" class="section-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">Assigned Tasks</h2>
+                    <button data-rs-click="employee-dashboard-20" class="text-sm text-primary-600 hover:text-primary-800">Refresh List</button>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deadline</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignedTasksBody" class="bg-white divide-y divide-gray-200">
+                                <!-- Tasks loaded via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Work Reports Section -->
+            <div id="workReportsSection" class="section-content hidden">
+                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Submit Report Form -->
+                    <div class="lg:col-span-1">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-6">
+                            <h2 class="text-xl font-bold text-gray-900 mb-4">Submit Daily Report</h2>
+                            <form id="workReportForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Report Title</label>
+                                    <input type="text" id="reportName" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                                        <input type="date" id="reportStartDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                                        <input type="date" id="reportEndDate" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Hours Worked</label>
+                                    <input type="number" id="totalHours" min="0" max="24" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea id="reportDescription" rows="4" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"></textarea>
+                                </div>
+                                <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 font-medium transition-colors">Submit Report</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Report History -->
+                    <div class="lg:col-span-2">
+                        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            <div class="p-6 border-b border-gray-100">
+                                <h2 class="text-xl font-bold text-gray-900">Report History</h2>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hours</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Remarks</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="reportHistoryBody" class="bg-white divide-y divide-gray-200">
+                                        <!-- Reports loaded via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- Leave Section -->
+            <div id="leaveSection" class="section-content hidden">
+
+                <!-- Leave Calendar -->
+              <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-6">
+                <h3 class="text-sm font-semibold text-gray-700 mb-3">Leave Calendar</h3>
+                <div id="leaveCalendar"></div>
+              </div>
+
+              <!-- Balance Cards -->
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="leaveBalanceCards">
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Annual</p>
+                  <p class="text-2xl font-bold text-indigo-600" id="bal-Annual">–</p>
+                  <p class="text-xs text-gray-400 mt-1">days left</p>
+                  <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div id="bar-Annual" class="h-full bg-indigo-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1"><span id="used-Annual">0</span> used / <span id="total-Annual">15</span></p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Sick</p>
+                  <p class="text-2xl font-bold text-blue-600" id="bal-Sick">–</p>
+                  <p class="text-xs text-gray-400 mt-1">days left</p>
+                  <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div id="bar-Sick" class="h-full bg-blue-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1"><span id="used-Sick">0</span> used / <span id="total-Sick">10</span></p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Casual</p>
+                  <p class="text-2xl font-bold text-emerald-600" id="bal-Casual">–</p>
+                  <p class="text-xs text-gray-400 mt-1">days left</p>
+                  <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div id="bar-Casual" class="h-full bg-emerald-500 rounded-full transition-all duration-500" style="width:0%"></div>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1"><span id="used-Casual">0</span> used / <span id="total-Casual">7</span></p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
+                  <p class="text-xs font-medium text-gray-500 uppercase tracking-wide mb-1">Unpaid</p>
+                  <p class="text-2xl font-bold text-gray-500" id="bal-Unpaid">&#8734;</p>
+                  <p class="text-xs text-gray-400 mt-1">always available</p>
+                  <div class="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-gray-400 rounded-full" style="width:100%"></div>
+                  </div>
+                  <p class="text-xs text-gray-400 mt-1"><span id="used-Unpaid">0</span> used</p>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Apply Form -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+                  <h2 class="text-xl font-bold text-gray-900 mb-5">Apply for Leave</h2>
+                  <form id="leaveForm" class="space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Leave Type <span class="text-red-500">*</span></label>
+                      <select id="leaveType" required data-rs-change="employee-dashboard-21"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+                        <option value="">Select type...</option>
+                        <option value="Annual">Annual Leave</option>
+                        <option value="Sick">Sick Leave</option>
+                        <option value="Casual">Casual Leave</option>
+                        <option value="Unpaid">Unpaid Leave</option>
+                      </select>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">From <span class="text-red-500">*</span></label>
+                        <input type="date" id="leaveStartDate" required data-rs-change="employee-dashboard-22"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">To <span class="text-red-500">*</span></label>
+                        <input type="date" id="leaveEndDate" required data-rs-change="employee-dashboard-23"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500">
+                      </div>
+                    </div>
+                    <div id="daysPreview" class="hidden bg-indigo-50 border border-indigo-200 rounded-lg px-4 py-2 text-sm text-indigo-700 font-medium"></div>
+                    <div>
+                      <label class="block text-sm font-medium text-gray-700 mb-1">Reason <span class="text-red-500">*</span></label>
+                      <textarea id="leaveReason" rows="3" required placeholder="Briefly describe the reason..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 resize-none"></textarea>
+                    </div>
+                    <div id="leaveFormError" class="hidden bg-red-50 border border-red-200 rounded-lg px-4 py-2 text-sm text-red-700"></div>
+                    <button type="submit"
+                      class="w-full bg-indigo-600 text-white py-2.5 rounded-lg hover:bg-indigo-700 font-semibold text-sm transition-colors">
+                      Submit Application
+                    </button>
+                  </form>
+                </div>
+
+                <!-- Leave History -->
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                  <div class="p-6 border-b border-gray-100 flex items-center justify-between">
+                    <h2 class="text-xl font-bold text-gray-900">Leave History</h2>
+                    <button data-rs-click="employee-dashboard-24" class="text-xs text-indigo-600 hover:underline">Refresh</button>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                      <thead class="bg-gray-50">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Days</th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                          <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody id="leaveHistoryBody" class="bg-white divide-y divide-gray-200">
+                        <tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 text-sm">Loading...</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="attendanceSection" class="section-content hidden">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-bold text-gray-900">My Attendance</h2>
+                    <p class="text-gray-500 text-sm mt-1">Track your daily check-in and check-out</p>
+                </div>
+
+                <!-- Today's Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <p class="text-sm text-gray-500 mb-1">Today — <span id="attTodayDate" class="font-medium text-gray-700"></span></p>
+                            <span id="attTodayStatus" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-600">Not Checked In</span>
+                        </div>
+                        <div class="flex items-center gap-6 text-sm text-gray-600">
+                            <div><p class="text-xs text-gray-400 mb-0.5">Check In</p><p id="attCheckInTime" class="font-mono font-bold text-green-600 text-base">--:--:--</p></div>
+                            <div><p class="text-xs text-gray-400 mb-0.5">Check Out</p><p id="attCheckOutTime" class="font-mono font-bold text-red-500 text-base">--:--:--</p></div>
+                            <div><p class="text-xs text-gray-400 mb-0.5">Duration</p><p id="attDuration" class="font-mono font-bold text-blue-600 text-base">--:--:--</p></div>
+                        </div>
+                        <div class="flex gap-3">
+                            <button id="checkInBtn" data-rs-click="employee-dashboard-25" class="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition shadow-sm">Check In</button>
+                            <button id="checkOutBtn" data-rs-click="employee-dashboard-26" class="px-5 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition shadow-sm hidden">Check Out</button>
+                        </div>
+                    </div>
+                    <div id="attLiveTimer" class="mt-4 text-center hidden">
+                        <p class="text-xs text-gray-400 mb-1">Time since check-in</p>
+                        <p id="attTimerDisplay" class="text-3xl font-mono font-bold text-primary-600">00:00:00</p>
+                    </div>
+                    <div id="attSundayMsg" class="mt-4 hidden">
+                        <p class="text-center text-sm font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg py-2">🎉 Today is Sunday — enjoy your holiday!</p>
+                    </div>
+                </div>
+
+                <!-- Month Filter -->
+                <div class="flex items-center gap-3 mb-4">
+                    <label class="text-sm font-medium text-gray-700">Month:</label>
+                    <input type="month" id="attMonthPicker" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                    <button data-rs-click="employee-dashboard-27" class="px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition">View</button>
+                </div>
+
+                <!-- Monthly Table -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-5 border-b border-gray-100">
+                        <h3 class="font-semibold text-gray-800">Monthly Attendance Record</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-100">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Day</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Late</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check In</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check Out</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attHistoryBody" class="divide-y divide-gray-50">
+                                <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Select a month to view records</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="bg-white p-8 rounded-xl shadow-2xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-900 mb-4">Upload Task Submission</h3>
+            <form id="uploadTaskForm" class="space-y-4">
+                <input type="hidden" id="uploadTaskId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Select File</label>
+                    <%- include('partials/upload-field', { inputId:'taskFile', inputName:'taskFile', label:'Add your task submission', accept:'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.jpg,.jpeg,.png,.gif,.webp', required:true, changeHandler:'' }) %>
+                </div>
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" data-rs-click="employee-dashboard-28" class="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Cancel</button>
+                    <button type="submit" class="px-4 py-2 text-white bg-primary-600 rounded-lg hover:bg-primary-700">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Task Details Modal -->
+    <div id="taskModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full" style="z-index: 100;">
+        <div class="relative top-20 mx-auto p-5 border w-96 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <div class="flex justify-between items-start mb-4">
+                    <h3 class="text-xl font-bold text-gray-900" id="modalTaskTitle">Task Title</h3>
+                    <button data-rs-click="employee-dashboard-29" class="text-gray-400 hover:text-gray-500">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Description</h4>
+                        <div class="bg-gray-50 p-3 rounded-lg text-gray-700" id="modalTaskDesc"></div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Deadline</h4>
+                            <p class="font-medium text-gray-900" id="modalTaskDeadline">-</p>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Status</h4>
+                            <span id="modalTaskStatus" class="inline-flex px-2 py-1 rounded-full text-xs font-bold">-</span>
+                        </div>
+                    </div>
+
+                    <div id="modalFeedbackSection" class="hidden">
+                        <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Manager Feedback</h4>
+                        <div class="bg-red-50 p-3 rounded-lg text-red-700 border border-red-100" id="modalTaskFeedback"></div>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end">
+                    <button data-rs-click="employee-dashboard-30" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+
+        // --- Task Modal Logic ---
+        function openTaskModal(title, desc, deadline, status, feedback) {
+            document.getElementById('modalTaskTitle').innerText = title;
+            document.getElementById('modalTaskDesc').innerText = desc;
+            document.getElementById('modalTaskDeadline').innerText = new Date(deadline).toLocaleDateString();
+
+            const statusEl = document.getElementById('modalTaskStatus');
+            statusEl.innerText = status;
+
+            // Reset classes
+            statusEl.className = 'inline-flex px-2 py-1 rounded-full text-xs font-bold';
+            if (status === 'Completed' || status === 'Approved') statusEl.classList.add('bg-green-100', 'text-green-800');
+            else if (status === 'Pending') statusEl.classList.add('bg-yellow-100', 'text-yellow-800');
+            else if (status === 'Submitted') statusEl.classList.add('bg-blue-100', 'text-blue-800');
+            else if (status === 'Rejected') statusEl.classList.add('bg-red-100', 'text-red-800');
+            else statusEl.classList.add('bg-gray-100', 'text-gray-800');
+
+            const feedbackSection = document.getElementById('modalFeedbackSection');
+            if(feedback && feedback !== 'undefined' && feedback !== '') {
+                document.getElementById('modalTaskFeedback').innerText = feedback;
+                feedbackSection.classList.remove('hidden');
+            } else {
+                feedbackSection.classList.add('hidden');
+            }
+
+            document.getElementById('taskModal').classList.remove('hidden');
+        }
+
+        function closeTaskModal() {
+            document.getElementById('taskModal').classList.add('hidden');
+        }
+
+        const currentEmployee = {
+            id: <%- jsonForScript(employee._id) %>,
+        };
+        let loadedTasks = [];
+        let taskChart = null;
+
+        // Toast Notification
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+
+            let icon = '';
+            if (type === 'success') icon = '<svg class="w-6 h-6 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+            else if (type === 'error') icon = '<svg class="w-6 h-6 text-red-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+            else icon = '<svg class="w-6 h-6 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+
+            toast.innerHTML = `${icon}<span class="text-gray-800 font-medium">${message}</span>`;
+
+            container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.add('show');
+            });
+
+            // Remove after 3s
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Update Chart
+        function updateTaskChart(tasks) {
+            const ctx = document.getElementById('employeeTaskChart').getContext('2d');
+
+            let statusCounts = { 'Completed': 0, 'In Progress': 0, 'Pending': 0, 'Submitted': 0, 'Rejected': 0 };
+
+            if(tasks) {
+                tasks.forEach(task => {
+                    let status = task.status;
+                    if (status === 'Approved') status = 'Completed';
+
+                    if (statusCounts.hasOwnProperty(status)) statusCounts[status]++;
+                    else statusCounts['Pending']++;
+                });
+            }
+
+            if (taskChart) {
+                taskChart.destroy();
+            }
+
+            taskChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: [
+                            '#10B981', // Completed (Green)
+                            '#3B82F6', // In Progress (Blue)
+                            '#F59E0B', // Pending (Yellow)
+                            '#8B5CF6', // Submitted (Purple)
+                            '#EF4444'  // Rejected (Red)
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        window.onload = function() {
+            currentEmployee.name = <%- jsonForScript(employee.name) %>;
+            currentEmployee.email = <%- jsonForScript(employee.email) %>;
+
+            // Set UI elements
+            document.getElementById("welcomeName").innerText = currentEmployee.name;
+            document.getElementById("profileName").innerText = currentEmployee.name;
+            document.getElementById("profileEmail").innerText = currentEmployee.email;
+
+            // Pre-fill edit form
+            document.getElementById("editName").value = currentEmployee.name;
+            document.getElementById("editEmail").value = currentEmployee.email;
+
+            // Load Initial Data
+            loadAssignedTasks();
+            loadReportHistory();
+            loadLeaveHistory();
+            loadLeaveBalance();
+            loadManagerInfo();
+            loadAnnouncements();
+
+            // Show default section
+            showSection('welcomeSection');
+
+            // Setup Listeners
+            document.getElementById('workReportForm').addEventListener('submit', submitWorkReport);
+            document.getElementById('leaveForm').addEventListener('submit', submitLeaveForm);
+            document.getElementById('uploadTaskForm').addEventListener('submit', submitTaskUpload);
+        };
+
+        // Navigation Logic
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
+            // Show target section
+            document.getElementById(sectionId).classList.remove('hidden');
+
+            // Update active state in sidebar
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if(el.getAttribute('onclick').includes(sectionId)) {
+                    el.classList.add('bg-gray-50', 'text-primary-600');
+                } else {
+                    el.classList.remove('bg-gray-50', 'text-primary-600');
+                }
+            });
+        }
+
+        // Profile Functions
+        function editProfile() {
+            document.getElementById('viewProfile').classList.add('hidden');
+            document.getElementById('editProfileForm').classList.remove('hidden');
+        }
+
+        function cancelEditProfile() {
+            document.getElementById('editProfileForm').classList.add('hidden');
+            document.getElementById('viewProfile').classList.remove('hidden');
+        }
+
+       async function updateProfile(e) {
+    e.preventDefault();
+
+    const updatedData = {
+        email: currentEmployee.email,
+        name: document.getElementById('editName').value,
+        phone: document.getElementById('editPhone').value,
+        department: document.getElementById('editDepartment').value,
+        address: document.getElementById('editAddress').value
+    };
+
+    try {
+        const response = await fetch('/employee/updateProfile', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(updatedData)
+        });
+
+        // 🚨 If route not found or server error
+        if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+        }
+
+        // 🚨 Ensure response is JSON
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('Invalid response from server');
+        }
+
+        const result = await response.json();
+
+        if (result.success) {
+            // Update local object
+            currentEmployee.name = updatedData.name;
+            currentEmployee.phone = updatedData.phone;
+            currentEmployee.department = updatedData.department;
+            currentEmployee.address = updatedData.address;
+
+            // Update UI
+            document.getElementById("profileName").innerText = currentEmployee.name;
+            document.getElementById("profilePhone").innerText = currentEmployee.phone || '-';
+            document.getElementById("profileDepartment").innerText = currentEmployee.department || '-';
+            document.getElementById("profileAddress").innerText = currentEmployee.address || '-';
+            document.getElementById("welcomeName").innerText = currentEmployee.name;
+
+            showToast('Profile updated successfully!', 'success');
+            cancelEditProfile();
+        } else {
+            showToast(result.error || 'Profile update failed', 'error');
+        }
+
+    } catch (error) {
+        console.error('Profile update error:', error);
+        showToast('Profile update API not found or server error', 'error');
+    }
+}
+
+document.getElementById('photoUploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('photoInput');
+            if (!fileInput.files[0]) return alert('Choose a photo first');
+            const formData = new FormData();
+            formData.append('profilePhoto', fileInput.files[0]);
+            const res = await fetch('/employee/uploadProfilePhoto', { method: 'POST', body: formData });
+            const data = await res.json();
+            if (data.success) {
+                document.getElementById('profilePreview').src = data.profilePhoto;
+                alert('Photo updated!');
+            } else {
+                alert(data.error || 'Upload failed');
+            }
+        });
+
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Defer FullCalendar init until the CDN script is fully loaded
+            function initLeaveCalendar() {
+                var calendarEl = document.getElementById('leaveCalendar');
+                if (!calendarEl) return;
+                if (typeof FullCalendar === 'undefined') {
+                    // Script not ready yet — retry in 200ms
+                    setTimeout(initLeaveCalendar, 200);
+                    return;
+                }
+
+                calendarEl.style.minHeight = '420px';
+
+                var leaveCalInstance = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left:   'prev,next today',
+                    center: 'title',
+                    right:  'dayGridMonth,listMonth'
+                },
+                height: 'auto',
+                events: async function(info, successCallback, failureCallback) {
+                    try {
+                        const res  = await fetch('/api/leave/calendar');
+                        const data = await res.json();
+                        successCallback(data.events || []);
+                    } catch(e) { failureCallback(e); }
+                },
+                eventClick: function(info) {
+                    const p = info.event.extendedProps;
+                    alert([
+                        'Leave Type: ' + (p.leaveType || '-'),
+                        'Status: '    + (p.status    || '-'),
+                        'Reason: '    + (p.reason    || '-')
+                    ].join('\n'));
+                }
+            });
+            leaveCalInstance.render();
+            } // end initLeaveCalendar
+            initLeaveCalendar();
+        });
+
+        // Task Functions
+        async function loadAssignedTasks() {
+            try {
+                const response = await fetch("/employee/getTasks", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: currentEmployee.email })
+                });
+                const data = await response.json();
+
+                const tbody = document.getElementById("assignedTasksBody");
+
+                if (data.tasks) {
+                    loadedTasks = data.tasks;
+                    document.getElementById('pendingTasksCount').innerText = data.tasks.filter(t => t.status !== 'Completed' && t.status !== 'Approved').length;
+                    updateTaskChart(data.tasks);
+                }
+
+                if (!data.success || !data.tasks || data.tasks.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No tasks assigned yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.tasks.map(task => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(task.title)}</td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            ${task.description.length > 50 ? task.description.substring(0, 50) + '...' : task.description}
+                            <button data-rs-click="employee-dashboard-31" data-rs-arg-0="${escapeHtml(task._id)}" class="text-xs text-primary-600 block mt-1 hover:underline font-medium">View Full Details</button>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(task.deadline).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                ${task.status === 'Completed' || task.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                                  task.status === 'Submitted' ? 'bg-blue-100 text-blue-800' :
+                                  task.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'}">
+                                ${escapeHtml(task.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            ${task.status === 'Pending' || task.status === 'In Progress' || task.status === 'Rejected' ?
+                                `<button data-rs-click="employee-dashboard-32" data-rs-arg-0="${escapeHtml(task._id)}" class="text-primary-600 hover:text-primary-900 bg-primary-50 px-3 py-1 rounded-md">Upload Submission</button>` :
+                                '<span class="text-gray-400 italic">Submitted</span>'}
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error("Error loading tasks", error);
+            }
+        }
+
+        function openTaskDetails(taskId) {
+            const task = loadedTasks.find(t => t._id === taskId);
+            if (task) {
+                openTaskModal(task.title, task.description, task.deadline, task.status, task.managerFeedback);
+            }
+        }
+
+        function openUploadModal(taskId) {
+            document.getElementById('uploadTaskId').value = taskId;
+            document.getElementById('uploadModal').classList.remove('hidden');
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.add('hidden');
+            document.getElementById('uploadTaskForm').reset();
+        }
+
+        async function submitTaskUpload(e) {
+            e.preventDefault();
+            const taskId = document.getElementById('uploadTaskId').value;
+            const fileInput = document.getElementById('taskFile');
+            const formData = new FormData();
+
+            formData.append('taskId', taskId);
+            formData.append('submissionFile', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/employee/submitTask', {
+                    method: 'POST',
+                    body: formData // No Content-Type header needed for FormData
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    showToast('Task submitted successfully!', 'success');
+                    closeUploadModal();
+                    loadAssignedTasks();
+                } else {
+                    showToast('Error: ' + result.error, 'error');
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('Failed to upload submission.', 'error');
+            }
+        }
+
+        // Work Report Functions
+        async function submitWorkReport(e) {
+            e.preventDefault();
+            const reportData = {
+                employeeId: currentEmployee.email,
+                startDate: document.getElementById("reportStartDate").value,
+                endDate: document.getElementById("reportEndDate").value,
+                totalHours: document.getElementById("totalHours").value,
+                reportName: document.getElementById("reportName").value,
+                description: document.getElementById("reportDescription").value
+            };
+
+            try {
+                const response = await fetch("/employee/submitWorkReport", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(reportData)
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    showToast("Report submitted successfully!", 'success');
+                    document.getElementById("workReportForm").reset();
+                    loadReportHistory();
+                } else {
+                    showToast("Error: " + data.error, 'error');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to submit report.", 'error');
+            }
+        }
+
+        async function loadReportHistory() {
+            try {
+                const response = await fetch("/employee/getWorkReports", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: currentEmployee.email })
+                });
+                const data = await response.json();
+
+                const tbody = document.getElementById("reportHistoryBody");
+                document.getElementById('submittedReportsCount').innerText = data.reports ? data.reports.length : 0;
+
+                if (!data.success || !data.reports || data.reports.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No reports found.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = data.reports.map(report => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${new Date(report.submittedAt || Date.now()).toLocaleDateString()}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(report.reportName)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${escapeHtml(report.totalHours)}h</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
+                                ${report.status === 'Approved' ? 'bg-green-100 text-green-800' :
+                                  report.status === 'Rejected' ? 'bg-red-100 text-red-800' :
+                                  'bg-yellow-100 text-yellow-800'}">
+                                ${escapeHtml(report.status)}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">${report.managerRemarks || '-'}</td>
+                    </tr>
+                `).join('');
+            } catch (error) {
+                console.error("Error loading reports", error);
+            }
+        }
+
+        // ── Leave Functions (upgraded) ──────────────────────────────────────
+        function countWorkingDays(startStr, endStr) {
+            const start = new Date(startStr), end = new Date(endStr);
+            let count = 0;
+            const cur = new Date(start);
+            while (cur <= end) {
+                const d = cur.getDay();
+                if (d !== 0 && d !== 6) count++;
+                cur.setDate(cur.getDate() + 1);
+            }
+            return count || 1;
+        }
+
+        function updateDaysPreview() {
+            const start   = document.getElementById('leaveStartDate').value;
+            const end     = document.getElementById('leaveEndDate').value;
+            const type    = document.getElementById('leaveType').value;
+            const preview = document.getElementById('daysPreview');
+            if (start && end && new Date(end) >= new Date(start)) {
+                const days = countWorkingDays(start, end);
+                preview.textContent = days + ' working day' + (days > 1 ? 's' : '') + (type ? ' (' + type + ')' : '');
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+
+        async function loadLeaveBalance() {
+            try {
+                const res  = await fetch('/api/leave/my-balance');
+                const data = await res.json();
+                if (!data.success) return;
+                ['Annual','Sick','Casual','Unpaid'].forEach(function(type) {
+                    const b       = data.balance[type];
+                    const balEl   = document.getElementById('bal-' + type);
+                    const usedEl  = document.getElementById('used-' + type);
+                    const totalEl = document.getElementById('total-' + type);
+                    const barEl   = document.getElementById('bar-' + type);
+                    if (balEl)  balEl.textContent  = type === 'Unpaid' ? '∞' : b.available;
+                    if (usedEl) usedEl.textContent = b.used;
+                    if (totalEl && type !== 'Unpaid') totalEl.textContent = b.entitled;
+                    if (barEl && type !== 'Unpaid' && b.entitled > 0) {
+                        barEl.style.width = Math.round(((b.entitled - b.available) / b.entitled) * 100) + '%';
+                    }
+                });
+            } catch (err) { console.error('Balance load error:', err); }
+        }
+
+        async function submitLeaveForm(e) {
+            e.preventDefault();
+            const errEl = document.getElementById('leaveFormError');
+            errEl.classList.add('hidden');
+            const leaveType = document.getElementById('leaveType').value;
+            const startDate = document.getElementById('leaveStartDate').value;
+            const endDate   = document.getElementById('leaveEndDate').value;
+            const reason    = document.getElementById('leaveReason').value;
+            if (!leaveType) { errEl.textContent = 'Please select a leave type.'; errEl.classList.remove('hidden'); return; }
+            try {
+                const res  = await fetch('/api/leave/apply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ leaveType, startDate, endDate, reason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('leaveForm').reset();
+                    document.getElementById('daysPreview').classList.add('hidden');
+                    loadLeaveHistory();
+                    loadLeaveBalance();
+                } else {
+                    errEl.textContent = data.error || 'Failed to submit leave.';
+                    errEl.classList.remove('hidden');
+                }
+            } catch (err) {
+                errEl.textContent = 'Network error. Try again.';
+                errEl.classList.remove('hidden');
+            }
+        }
+
+        async function cancelLeave(leaveId) {
+            if (!confirm('Cancel this leave request?')) return;
+            try {
+                const res  = await fetch('/api/leave/cancel/' + leaveId, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) { loadLeaveHistory(); loadLeaveBalance(); }
+                else alert(data.error || 'Failed to cancel.');
+            } catch (err) { alert('Network error.'); }
+        }
+
+        async function loadLeaveHistory() {
+            const tbody = document.getElementById('leaveHistoryBody');
+            tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 text-sm">Loading...</td></tr>';
+            try {
+                const res  = await fetch('/api/leave/my-leaves');
+                const data = await res.json();
+                if (!data.success || !data.leaves || data.leaves.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-400 text-sm">No leave history yet.</td></tr>';
+                    return;
+                }
+                const typeColors = { Annual:'bg-indigo-100 text-indigo-700', Sick:'bg-blue-100 text-blue-700', Casual:'bg-emerald-100 text-emerald-700', Unpaid:'bg-gray-100 text-gray-700' };
+                tbody.innerHTML = data.leaves.map(function(leave) { return (
+                    '<tr>' +
+                    '<td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 text-xs font-semibold rounded-full ' + (typeColors[leave.leaveType]||'bg-gray-100 text-gray-700') + '">' + (leave.leaveType||'Annual') + '</span></td>' +
+                    '<td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">' + new Date(leave.startDate).toLocaleDateString('en-IN') + ' → ' + new Date(leave.endDate).toLocaleDateString('en-IN') + '</td>' +
+                    '<td class="px-4 py-3 text-sm font-semibold text-gray-800 whitespace-nowrap">' + (leave.totalDays||1) + 'd</td>' +
+                    '<td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 inline-flex text-xs font-semibold rounded-full ' + (leave.status==='Approved'?'bg-green-100 text-green-800':leave.status==='Rejected'?'bg-red-100 text-red-800':'bg-yellow-100 text-yellow-800') + '">' + leave.status + '</span></td>' +
+                    '<td class="px-4 py-3 whitespace-nowrap">' + (leave.status==="Pending" ? '<button data-id="' + leave._id + '" data-rs-click="employee-dashboard-33" class="text-xs text-red-600 hover:underline font-medium">Cancel</button>' : '<span class="text-xs text-gray-300">–</span>') + '</td>' +
+                    '</tr>'
+                ); }).join('');
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-red-400 text-sm">Failed to load.</td></tr>';
+            }
+        }
+
+        // ── Attendance System ── //
+        const EMPLOYEE_ID = <%- jsonForScript(typeof employee !== "undefined" && employee._id ? employee._id : "") %>;
+        let attInterval = null;
+        let checkInTimestamp = null;
+
+        const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+        function formatDuration(checkInStr, checkOutStr) {
+            if (!checkInStr || checkInStr === '-' || !checkOutStr || checkOutStr === '-') return '--:--:--';
+            const toSecs = t => { const [h,m,s] = t.split(':').map(Number); return h*3600+m*60+s; };
+            let diff = toSecs(checkOutStr) - toSecs(checkInStr);
+            if (diff < 0) diff += 86400;
+            const h = Math.floor(diff/3600).toString().padStart(2,'0');
+            const m = Math.floor((diff%3600)/60).toString().padStart(2,'0');
+            const s = (diff%60).toString().padStart(2,'0');
+            return `${h}:${m}:${s}`;
+        }
+
+        function startLiveTimer(checkInStr) {
+            const timerEl = document.getElementById('attTimerDisplay');
+            const liveEl = document.getElementById('attLiveTimer');
+            liveEl.classList.remove('hidden');
+            if (attInterval) clearInterval(attInterval);
+            const toSecs = t => { const [h,m,s] = t.split(':').map(Number); return h*3600+m*60+s; };
+            const startSecs = toSecs(checkInStr);
+            attInterval = setInterval(() => {
+                const now = new Date();
+                const nowSecs = now.getHours()*3600 + now.getMinutes()*60 + now.getSeconds();
+                let diff = nowSecs - startSecs;
+                if (diff < 0) diff = 0;
+                const h = Math.floor(diff/3600).toString().padStart(2,'0');
+                const m = Math.floor((diff%3600)/60).toString().padStart(2,'0');
+                const s = (diff%60).toString().padStart(2,'0');
+                timerEl.innerText = `${h}:${m}:${s}`;
+            }, 1000);
+        }
+
+        async function loadTodayStatus() {
+            if (!EMPLOYEE_ID) return;
+            const today = new Date().toISOString().split('T')[0];
+            const day = DAYS[new Date().getDay()];
+            document.getElementById('attTodayDate').innerText = `${today} (${day})`;
+
+            if (new Date().getDay() === 0) {
+                document.getElementById('attSundayMsg').classList.remove('hidden');
+                document.getElementById('checkInBtn').disabled = true;
+                document.getElementById('checkInBtn').classList.add('opacity-50', 'cursor-not-allowed');
+                return;
+            }
+
+            try {
+                const res = await fetch(`/api/attendance/today-status?userId=${EMPLOYEE_ID}`);
+                const data = await res.json();
+                const rec = data.record;
+                if (!rec) return;
+
+                document.getElementById('attCheckInTime').innerText = rec.checkIn || '--:--:--';
+                document.getElementById('attCheckOutTime').innerText = rec.checkOut || '--:--:--';
+                document.getElementById('attDuration').innerText = formatDuration(rec.checkIn, rec.checkOut);
+
+                if (rec.checkIn && !rec.checkOut) {
+                    if (rec.isLate) {
+                        document.getElementById('attTodayStatus').innerText = 'Checked In — Late';
+                        document.getElementById('attTodayStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-700';
+                    } else {
+                        document.getElementById('attTodayStatus').innerText = 'Checked In';
+                        document.getElementById('attTodayStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700';
+                    }
+                    document.getElementById('checkInBtn').classList.add('hidden');
+                    document.getElementById('checkOutBtn').classList.remove('hidden');
+                    startLiveTimer(rec.checkIn);
+                } else if (rec.checkIn && rec.checkOut) {
+                    document.getElementById('attTodayStatus').innerText = 'Checked Out';
+                    document.getElementById('attTodayStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700';
+                    document.getElementById('checkInBtn').classList.add('hidden');
+                    document.getElementById('checkOutBtn').classList.add('hidden');
+                    document.getElementById('attLiveTimer').classList.add('hidden');
+                }
+            } catch (e) { console.error('Failed to load today status', e); }
+        }
+
+        async function doCheckIn() {
+            if (!EMPLOYEE_ID) return alert('Session expired. Please login again.');
+            try {
+                const res = await fetch('/api/attendance/checkin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: EMPLOYEE_ID, userModel: 'Employee' })
+                });
+                const data = await res.json();
+                if (!data.success) return alert(data.error || 'Check-in failed');
+                document.getElementById('attCheckInTime').innerText = data.record.checkIn;
+
+                // Show "Late" badge if checked in after shift start (09:15)
+                if (data.isLate) {
+                    document.getElementById('attTodayStatus').innerText = 'Checked In — Late';
+                    document.getElementById('attTodayStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-orange-100 text-orange-700';
+                    showToast('You checked in late (after 09:15 AM). This has been recorded.', 'error');
+                } else {
+                    document.getElementById('attTodayStatus').innerText = 'Checked In';
+                    document.getElementById('attTodayStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700';
+                }
+                document.getElementById('checkInBtn').classList.add('hidden');
+                document.getElementById('checkOutBtn').classList.remove('hidden');
+                startLiveTimer(data.record.checkIn);
+            } catch (e) { alert('Check-in failed'); }
+        }
+
+        async function doCheckOut() {
+            if (!EMPLOYEE_ID) return;
+            try {
+                const res = await fetch('/api/attendance/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId: EMPLOYEE_ID })
+                });
+                const data = await res.json();
+                if (!data.success) return alert(data.error || 'Check-out failed');
+                clearInterval(attInterval);
+                document.getElementById('attLiveTimer').classList.add('hidden');
+                document.getElementById('attCheckOutTime').innerText = data.record.checkOut;
+                document.getElementById('attDuration').innerText = formatDuration(data.record.checkIn, data.record.checkOut);
+                document.getElementById('attTodayStatus').innerText = 'Checked Out';
+                document.getElementById('attTodayStatus').className = 'inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700';
+                document.getElementById('checkOutBtn').classList.add('hidden');
+            } catch (e) { alert('Check-out failed'); }
+        }
+
+        async function loadMyHistory() {
+            const monthVal = document.getElementById('attMonthPicker').value;
+            if (!monthVal || !EMPLOYEE_ID) return;
+            try {
+                const res = await fetch(`/api/attendance/my-history?userId=${EMPLOYEE_ID}&month=${monthVal}`);
+                const data = await res.json();
+                renderHistoryTable(data.records, monthVal);
+            } catch (e) { console.error(e); }
+        }
+
+        function renderHistoryTable(records, monthStr) {
+            const tbody = document.getElementById('attHistoryBody');
+            const [year, mon] = monthStr.split('-').map(Number);
+            const daysInMonth = new Date(year, mon, 0).getDate();
+            let html = '';
+            for (let d = 1; d <= daysInMonth; d++) {
+                const dateStr = `${year}-${String(mon).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dayOfWeek = new Date(dateStr).getDay();
+                const dayName = DAYS[dayOfWeek];
+                const isSun = dayOfWeek === 0;
+                const rec = records.find(r => r.date === dateStr);
+
+                let statusBadge, rowClass = '';
+                if (isSun) {
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Holiday</span>';
+                    rowClass = 'bg-purple-50';
+                } else if (rec && rec.checkIn) {
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Present</span>';
+                } else {
+                    statusBadge = '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Absent</span>';
+                    rowClass = 'bg-red-50';
+                }
+
+                const lateBadge = (!isSun && rec?.isLate)
+                    ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700">Late</span>'
+                    : ((!isSun && rec?.checkIn) ? '<span class="text-xs text-gray-400">On time</span>' : '-');
+
+                html += `<tr class="${rowClass} hover:bg-gray-50 transition-colors">
+                    <td class="px-6 py-3 text-sm text-gray-700">${dateStr}</td>
+                    <td class="px-6 py-3 text-sm font-medium ${isSun ? 'text-purple-600' : 'text-gray-700'}">${dayName}</td>
+                    <td class="px-6 py-3">${statusBadge}</td>
+                    <td class="px-6 py-3">${lateBadge}</td>
+                    <td class="px-6 py-3 text-sm font-mono ${rec?.checkIn ? 'text-green-600 font-semibold' : 'text-gray-400'}">${rec?.checkIn || '-'}</td>
+                    <td class="px-6 py-3 text-sm font-mono ${rec?.checkOut ? 'text-red-500 font-semibold' : 'text-gray-400'}">${rec?.checkOut || '-'}</td>
+                    <td class="px-6 py-3 text-sm font-mono text-blue-600">${formatDuration(rec?.checkIn, rec?.checkOut)}</td>
+                </tr>`;
+            }
+            tbody.innerHTML = html;
+        }
+
+        // Set default month picker to current month and load today status
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            document.getElementById('attMonthPicker').value = m;
+            loadTodayStatus();
+        });
+
+
+        // ── Manager Info ──────────────────────────────────────────────────
+        async function loadManagerInfo() {
+            try {
+                const res  = await fetch('/employee/getManagerInfo');
+                const data = await res.json();
+
+                if (data.success && data.managerName) {
+                    document.getElementById('managerNameDisplay').innerText = data.managerName;
+                    document.getElementById('managerInfoCard').classList.remove('hidden');
+                    document.getElementById('noManagerCard').classList.add('hidden');
+                } else {
+                    document.getElementById('noManagerCard').classList.remove('hidden');
+                    document.getElementById('managerInfoCard').classList.add('hidden');
+                }
+            } catch (err) {
+                console.error('Failed to load manager info:', err);
+                document.getElementById('noManagerCard').classList.remove('hidden');
+            }
+        }
+
+        async function loadAnnouncements() {
+            try {
+                const res  = await fetch('/api/overview/announcements');
+                const data = await res.json();
+                const container = document.getElementById('announcementsList');
+                if (!container) return;
+                if (!data.success || !data.announcements || data.announcements.length === 0) {
+                    container.innerHTML = '<p class="text-sm text-gray-400">No announcements yet.</p>';
+                    return;
+                }
+                const colors = ['border-primary-500','border-yellow-500','border-green-500','border-indigo-500'];
+                container.innerHTML = data.announcements.slice(0,4).map(function(a, i) {
+                    return '<div class="border-l-4 ' + colors[i % colors.length] + ' pl-3 py-1">' +
+                        '<p class="text-sm font-medium text-gray-900">' + a.title + '</p>' +
+                        '<p class="text-xs text-gray-500 mt-0.5">' + a.message.substring(0,80) + (a.message.length > 80 ? '...' : '') + '</p>' +
+                        '</div>';
+                    }).join('');
+                } catch(err) {
+                    console.error('Announcements load error:', err);
+                }
+            }
+
+        // ── Removal Notice ────────────────────────────────────────────────
+        async function checkRemovalStatus() {
+            try {
+                const res  = await fetch('/api/complaints/my-status');
+                const data = await res.json();
+                if (!data.success || !data.hasRemovalNotice) return;
+
+                // Show the banner
+                document.getElementById('removalNoticeBanner').classList.remove('hidden');
+                document.getElementById('removalManagerName').textContent = data.managerName;
+                document.getElementById('removalReasonText').textContent  = data.removalReason;
+
+                const actionBtns       = document.getElementById('removalActionButtons');
+                const acceptedMsg      = document.getElementById('removalAcceptedMsg');
+                const complaintMsg     = document.getElementById('complaintSubmittedMsg');
+
+                if (data.removalAccepted) {
+                    actionBtns.classList.add('hidden');
+                    acceptedMsg.classList.remove('hidden');
+                } else if (data.complaint && data.complaint.submitted) {
+                    actionBtns.classList.add('hidden');
+                    complaintMsg.classList.remove('hidden');
+                    document.getElementById('complaintStatusText').textContent = data.complaint.status;
+                    if (data.complaint.hrNote) {
+                        document.getElementById('hrNoteSection').classList.remove('hidden');
+                        document.getElementById('hrNoteText').textContent = data.complaint.hrNote;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to check removal status:', err);
+            }
+        }
+
+        function showComplaintForm() {
+            document.getElementById('complaintFormContainer').classList.remove('hidden');
+            document.getElementById('removalActionButtons').classList.add('hidden');
+        }
+
+        function hideComplaintForm() {
+            document.getElementById('complaintFormContainer').classList.add('hidden');
+            document.getElementById('removalActionButtons').classList.remove('hidden');
+        }
+
+        // Show file name when selected
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('complaintAttachment');
+            if (fileInput) {
+                fileInput.addEventListener('change', () => {
+                    const label = document.getElementById('selectedFileName');
+                    if (fileInput.files.length > 0) {
+                        label.textContent = '📎 ' + fileInput.files[0].name;
+                        label.classList.remove('hidden');
+                    } else {
+                        label.classList.add('hidden');
+                    }
+                });
+            }
+        });
+
+        async function acceptRemoval() {
+            if (!confirm('Are you sure you want to accept the removal? This cannot be undone.')) return;
+            try {
+                const res  = await fetch('/api/complaints/accept-removal', { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('removalActionButtons').classList.add('hidden');
+                    document.getElementById('removalAcceptedMsg').classList.remove('hidden');
+                    showToast('You have accepted the removal.', 'success');
+                } else {
+                    showToast(data.error || 'Failed to process.', 'error');
+                }
+            } catch (err) {
+                showToast('Server error. Try again.', 'error');
+            }
+        }
+
+        async function submitComplaint() {
+            const text = document.getElementById('complaintTextInput').value.trim();
+            if (!text || text.length < 10) {
+                showToast('Please write a complaint of at least 10 characters.', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('complaintText', text);
+            const fileInput = document.getElementById('complaintAttachment');
+            if (fileInput.files.length > 0) {
+                formData.append('attachment', fileInput.files[0]);
+            }
+
+            const btn = document.querySelector('#complaintForm button[data-rs-click="employee-dashboard-34"]');
+            btn.textContent = 'Submitting...';
+            btn.disabled = true;
+
+            try {
+                const res  = await fetch('/api/complaints/submit', { method: 'POST', body: formData });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('complaintFormContainer').classList.add('hidden');
+                    document.getElementById('removalActionButtons').classList.add('hidden');
+                    const complaintMsg = document.getElementById('complaintSubmittedMsg');
+                    complaintMsg.classList.remove('hidden');
+                    document.getElementById('complaintStatusText').textContent = 'Pending';
+                    showToast('Complaint submitted to HR successfully.', 'success');
+                } else {
+                    showToast(data.error || 'Failed to submit complaint.', 'error');
+                }
+            } catch (err) {
+                showToast('Server error. Try again.', 'error');
+            } finally {
+                btn.textContent = 'Submit Complaint';
+                btn.disabled = false;
+            }
+        }
+
+        // Call on page load
+        window.addEventListener('load', () => {
+            checkRemovalStatus();
+        });
+
+        // ── Transfer Request ──────────────────────────────────────────────
+        async function loadTransferStatus() {
+            try {
+                const res  = await fetch('/api/transfer/my-status');
+                const data = await res.json();
+                if (!data.success) return;
+
+                if (data.hasRequest) {
+                    const t = data.transfer;
+                    document.getElementById('transferStatusCard').classList.remove('hidden');
+                    document.getElementById('transferReasonDisplay').textContent = t.reason;
+                    document.getElementById('transferManagerStatus').textContent = t.managerStatus;
+                    document.getElementById('transferHRStatus').textContent      = t.hrStatus === 'Pending' ? 'Awaiting HR' : t.hrStatus;
+
+                    const statusColors = { Pending: 'text-yellow-600', Approved: 'text-green-600', Rejected: 'text-red-600', Assigned: 'text-green-700' };
+                    document.getElementById('transferManagerStatus').className = 'font-bold ' + (statusColors[t.managerStatus] || '');
+                    document.getElementById('transferHRStatus').className      = 'font-bold ' + (statusColors[t.hrStatus]      || '');
+
+                    if (t.managerNote) {
+                        document.getElementById('transferManagerNoteRow').classList.remove('hidden');
+                        document.getElementById('transferManagerNote').textContent = t.managerNote;
+                    }
+                    if (t.newManagerName) {
+                        document.getElementById('transferNewManagerRow').classList.remove('hidden');
+                        document.getElementById('transferNewManager').textContent = t.newManagerName;
+                    }
+                    // Hide form if still pending manager review
+                    if (t.managerStatus === 'Pending') {
+                        document.getElementById('transferFormWrapper').classList.add('hidden');
+                    }
+                }
+            } catch (err) {
+                console.error('Transfer status load error:', err);
+            }
+        }
+
+        async function submitTransferRequest() {
+            const reason = document.getElementById('transferReasonInput').value.trim();
+            const msg    = document.getElementById('transferFormMsg');
+            msg.className = 'text-xs mt-2';
+            msg.classList.remove('hidden');
+
+            if (reason.length < 10) {
+                msg.textContent = 'Please provide at least 10 characters.';
+                msg.classList.add('text-red-600');
+                return;
+            }
+
+            try {
+                const res  = await fetch('/api/transfer/request', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ reason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    msg.textContent = '\u2705 Request submitted. Your manager will review it.';
+                    msg.classList.add('text-green-600');
+                    document.getElementById('transferFormWrapper').classList.add('hidden');
+                    setTimeout(() => loadTransferStatus(), 800);
+                } else {
+                    msg.textContent = data.error || 'Failed to submit.';
+                    msg.classList.add('text-red-600');
+                }
+            } catch (err) {
+                msg.textContent = 'Network error. Try again.';
+                msg.classList.add('text-red-600');
+            }
+        }
+
+        // Call on page load
+        window.addEventListener('load', () => {
+            loadTransferStatus();
+        });
+
+        // ── My Performance Reviews (Employee) ──────────────────────────────
+        async function loadMyPerformanceReviews() {
+            var countEl  = document.getElementById('emp-perf-count');
+            var avgEl    = document.getElementById('emp-perf-avg');
+            var latestEl = document.getElementById('emp-perf-latest');
+            var listEl   = document.getElementById('emp-reviews-list');
+            if (!listEl) return;
+            listEl.innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
+            try {
+                var res  = await fetch('/api/performance/my-reviews');
+                var data = await res.json();
+                if (!data.success || !data.reviews || !data.reviews.length) {
+                    listEl.innerHTML = '<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center"><p class="text-3xl mb-2">&#128203;</p><p class="text-sm text-gray-500 font-medium">No performance reviews yet.</p><p class="text-xs text-gray-400 mt-1">Your manager will submit reviews here after each review period.</p></div>';
+                    if(countEl) countEl.textContent='0';
+                    if(avgEl)   avgEl.textContent='-';
+                    if(latestEl)latestEl.textContent='-';
+                    return;
+                }
+                var reviews = data.reviews;
+                if(countEl) countEl.textContent = reviews.length;
+                var avg = (reviews.reduce(function(s,r){return s+r.rating;},0)/reviews.length).toFixed(1);
+                if(avgEl)    avgEl.textContent = avg+'&#9733;';
+                if(latestEl) latestEl.textContent = reviews[0].rating+'&#9733;';
+
+                var ratingColors = {1:'text-red-500',2:'text-orange-500',3:'text-amber-500',4:'text-blue-600',5:'text-green-600'};
+                var ratingLabels2 = {1:'Poor',2:'Below Average',3:'Average',4:'Good',5:'Excellent'};
+                listEl.innerHTML = reviews.map(function(r) {
+                    var stars = '&#9733;'.repeat(r.rating)+'&#9734;'.repeat(5-r.rating);
+                    var goals = r.goals && r.goals.length ? r.goals.map(function(g){
+                        var dot = g.status==='Achieved'?'bg-green-500':g.status==='In Progress'?'bg-blue-500':'bg-gray-300';
+                        return '<span class="flex items-center gap-1.5 text-xs text-gray-600"><span class="w-2 h-2 rounded-full '+dot+' inline-block"></span>'+g.description+'</span>';
+                    }).join('') : '';
+                    return '<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">'+
+                        '<div class="flex items-start justify-between mb-4">'+
+                            '<div>'+
+                                '<p class="text-sm font-bold text-indigo-700 mb-0.5">'+r.period+'</p>'+
+                                '<p class="text-xs text-gray-500">Reviewed by <span class="font-medium text-gray-700">'+r.reviewerName+'</span> ('+r.reviewerModel+')</p>'+
+                            '</div>'+
+                            '<div class="text-right">'+
+                                '<p class="text-amber-400 text-xl font-bold">'+stars+'</p>'+
+                                '<p class="text-xs font-semibold '+ratingColors[r.rating]+' mt-0.5">'+ratingLabels2[r.rating]+'</p>'+
+                            '</div>'+
+                        '</div>'+
+                        '<p class="text-sm text-gray-700 leading-relaxed mb-4">'+r.comments+'</p>'+
+                        (r.strengths ? '<div class="bg-green-50 border border-green-100 rounded-lg p-3 mb-3"><p class="text-xs font-semibold text-green-800 mb-1">Strengths</p><p class="text-xs text-green-700">'+r.strengths+'</p></div>' : '')+
+                        (r.improvements ? '<div class="bg-amber-50 border border-amber-100 rounded-lg p-3 mb-3"><p class="text-xs font-semibold text-amber-800 mb-1">Areas for Growth</p><p class="text-xs text-amber-700">'+r.improvements+'</p></div>' : '')+
+                        (goals ? '<div class="bg-gray-50 border border-gray-100 rounded-lg p-3"><p class="text-xs font-semibold text-gray-700 mb-2">Goals</p><div class="space-y-1">'+goals+'</div></div>' : '')+
+                        '<p class="text-xs text-gray-300 mt-3">'+new Date(r.createdAt).toLocaleDateString('en-IN')+'</p>'+
+                    '</div>';
+                }).join('');
+            } catch(err) {
+                listEl.innerHTML = '<p class="text-sm text-red-400">Failed to load reviews.</p>';
+            }
+        }
+
+        // Hook into showSection so reviews load when tab is clicked
+        // Extra showSection hook — runs after the main showSection defined earlier
+        // Adds section-specific load calls without redefining showSection
+        document.addEventListener('click', function(e) {
+            const btn = e.target.closest('button[onclick]');
+            if (!btn) return;
+            const onclick = btn.getAttribute('onclick') || '';
+            if (onclick.includes("'performanceSection'") || onclick.includes('"performanceSection"')) {
+                loadMyPerformanceReviews();
+            }
+        });
+
+</script>
+
+    <!-- ══ ANNOUNCEMENT SYSTEM JS ══════════════════════════════════════════ -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    (function() {
+        /* ── Socket connection ─────────────────────────────────────────── */
+        const _socket = typeof io !== 'undefined' ? io() : null;
+        let _annPanelOpen = false;
+
+        /* ── On socket connect: request unread count immediately ──────── */
+        if (_socket) {
+            _socket.on('connect', function() {
+                _socket.emit('notifications:get_count');
+            });
+
+            /* Real-time: new announcement arrived ─────────────────────── */
+            _socket.on('announcement:new', function(ann) {
+                // Increment badge
+                const badge = document.getElementById('ann-badge');
+                if (badge) {
+                    const cur = parseInt(badge.textContent) || 0;
+                    _setBadge(cur + 1);
+                }
+                // Prepend to list if panel is open
+                if (_annPanelOpen) {
+                    _prependAnnouncement(ann);
+                } else {
+                    // Reload list next time panel opens
+                    _annListDirty = true;
+                }
+                // Flash button
+                const btn = document.getElementById('ann-toggle-btn');
+                if (btn) {
+                    btn.classList.add('bg-blue-100');
+                    setTimeout(function() { btn.classList.remove('bg-blue-100'); }, 1500);
+                }
+            });
+        }
+
+        let _annListDirty = true; // force first load
+
+        /* ── Toggle panel open/close ───────────────────────────────────── */
+        window.toggleAnnouncementPanel = function() {
+            _annPanelOpen = !_annPanelOpen;
+            const panel   = document.getElementById('ann-panel');
+            const chevron = document.getElementById('ann-chevron');
+            if (!panel) return;
+
+            if (_annPanelOpen) {
+                panel.classList.remove('hidden');
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+                if (_annListDirty) _loadAnnouncementList();
+                // Mark seen after 1 second (gives user time to read)
+                setTimeout(markAllAnnouncementsSeen, 1000);
+            } else {
+                panel.classList.add('hidden');
+                if (chevron) chevron.style.transform = '';
+            }
+        };
+
+        /* ── Load announcements from API ───────────────────────────────── */
+        async function _loadAnnouncementList() {
+            const list = document.getElementById('ann-list');
+            if (!list) return;
+            list.innerHTML = '<p class="text-xs text-gray-400 px-4 py-3">Loading…</p>';
+            try {
+                const res  = await fetch('/api/overview/announcements');
+                const data = await res.json();
+                if (!data.success || !data.announcements || data.announcements.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-500 px-4 py-3 text-center">No announcements yet.</p>';
+                    return;
+                }
+                list.innerHTML = data.announcements.map(function(a) {
+                    return _annCard(a);
+                }).join('');
+                _annListDirty = false;
+            } catch(e) {
+                list.innerHTML = '<p class="text-xs text-red-400 px-4 py-3">Failed to load.</p>';
+            }
+        }
+
+        /* ── Prepend a single new announcement card ────────────────────── */
+        function _prependAnnouncement(ann) {
+            const list = document.getElementById('ann-list');
+            if (!list) return;
+            // Remove "no announcements" placeholder if present
+            const placeholder = list.querySelector('p');
+            if (placeholder) placeholder.remove();
+            const div = document.createElement('div');
+            div.innerHTML = _annCard(ann);
+            list.insertBefore(div.firstChild, list.firstChild);
+        }
+
+        /* ── Build HTML card for one announcement — clickable ─────────── */
+        function _annCard(a) {
+            const dateStr = a.date ? new Date(a.date).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) : '';
+            const titleEsc   = _esc(a.title);
+            const msgEsc     = _esc(a.message);
+            const attachHtml = a.attachmentUrl
+                ? '<a href="' + a.attachmentUrl + '" target="_blank" class="mt-2 inline-flex items-center gap-1 text-primary-600 hover:underline text-xs" data-rs-click="employee-dashboard-35"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>View Attachment</a>'
+                : '';
+            const dataAttach = a.attachmentUrl ? ' data-attach="' + _esc(a.attachmentUrl) + '"' : '';
+            return '<div class="px-4 py-3 hover:bg-blue-100 transition-colors cursor-pointer" ' +
+                       'data-rs-click="employee-dashboard-36" ' +
+                       'data-title="' + titleEsc + '" ' +
+                       'data-msg="' + msgEsc + '" ' +
+                       'data-date="' + dateStr + '"' + dataAttach + '>' +
+                       '<p class="text-xs font-bold text-gray-800 leading-snug">' + titleEsc + '</p>' +
+                       '<p class="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">' + msgEsc + '</p>' +
+                       attachHtml +
+                       '<p class="text-xs text-gray-400 mt-1">' + dateStr + '</p>' +
+                   '</div>';
+        }
+
+        window.openAnnModal = function(el) {
+            const title  = el.getAttribute('data-title')  || '';
+            const msg    = el.getAttribute('data-msg')    || '';
+            const date   = el.getAttribute('data-date')   || '';
+            const attach = el.getAttribute('data-attach') || '';
+            document.getElementById('ann-modal-title').textContent = title;
+            document.getElementById('ann-modal-msg').textContent   = msg;
+            document.getElementById('ann-modal-date').textContent  = date;
+            const attachEl = document.getElementById('ann-modal-attach');
+            if (attach) { attachEl.href = attach; attachEl.classList.remove('hidden'); }
+            else { attachEl.classList.add('hidden'); }
+            document.getElementById('ann-modal').classList.remove('hidden');
+        };
+
+        window.closeAnnModal = function() {
+            document.getElementById('ann-modal').classList.add('hidden');
+        };
+
+        /* ── Mark all announcements as seen (resets badge) ─────────────── */
+        window.markAllAnnouncementsSeen = async function() {
+            try {
+                await fetch('/api/overview/announcements/mark-seen', { method: 'POST' });
+                _setBadge(0);
+            } catch(e) {}
+        };
+
+        /* ── Set badge count ───────────────────────────────────────────── */
+        function _setBadge(n) {
+            const badge = document.getElementById('ann-badge');
+            if (!badge) return;
+            if (n > 0) {
+                badge.textContent = n > 99 ? '99+' : n;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+            }
+        }
+
+        /* ── HTML-escape helper ────────────────────────────────────────── */
+        function _esc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        /* ── Poll unread count on page load (fallback if socket fails) ─── */
+        async function _pollUnreadCount() {
+            try {
+                const res  = await fetch('/api/overview/announcements/unread-count');
+                const data = await res.json();
+                if (data.success) _setBadge(data.count);
+            } catch(e) {}
+        }
+
+        /* ── Init ──────────────────────────────────────────────────────── */
+        document.addEventListener('DOMContentLoaded', function() {
+            _pollUnreadCount();
+        });
+
+    })();
+    </script>
+    <!-- ══ END ANNOUNCEMENT SYSTEM JS ══════════════════════════════════════ -->
+
+<!-- Announcement Detail Modal -->
+<div id="ann-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                </div>
+                <h3 class="text-base font-bold text-gray-900">Announcement</h3>
+            </div>
+            <button data-rs-click="employee-dashboard-37" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <h2 id="ann-modal-title" class="text-xl font-bold text-gray-900 mb-3"></h2>
+            <p id="ann-modal-msg" class="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap"></p>
+            <a id="ann-modal-attach" href="#" target="_blank"
+               class="hidden inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                View Attachment
+            </a>
+            <p id="ann-modal-date" class="text-xs text-gray-400"></p>
+        </div>
+    </div>
+</div>
+<%- include('partials/site-tools') %>
+<div id="rs-dashboard-experience" data-login-token="<%= typeof welcome !== 'undefined' ? welcome.token : '' %>" data-name="<%= typeof welcome !== 'undefined' ? welcome.name : '' %>"></div>
+</body>
+</html>

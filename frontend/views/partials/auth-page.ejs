@@ -1,0 +1,53 @@
+<%
+const isRegister = mode === 'register';
+const chosen = selectedRole || null;
+const hint = typeof loginHint !== 'undefined' ? loginHint : null;
+const roles = ['Admin','HR','Manager','Employee'];
+const roleDescriptions = { Admin:'A clear view of the whole organization.', HR:'The people behind a better workplace.', Manager:'Bring your team’s best work together.', Employee:'Your work, progress and possibilities.' };
+let errorText = error || '';
+if (errorText === 'pending') errorText = 'Your account is awaiting administrator approval.';
+if (errorText === 'rejected') errorText = 'Your registration was declined. Please contact your administrator.';
+if (errorText.startsWith('wrong_role:')) errorText = 'Please choose the correct role for your account.';
+%>
+<!DOCTYPE html><html lang="en"><head>
+<%- include('premium-head') %><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#f4f2ee"><title><%= isRegister ? 'Create an account' : 'Sign in' %><%= chosen ? ' · ' + chosen : '' %> | RoleSphere</title>
+<link rel="stylesheet" href="/css/glass-folder.css"><link rel="stylesheet" href="/css/auth.css"><link rel="stylesheet" href="/css/recovery.css"><script src="/js/auth-art.js" defer></script><script src="/js/auth.js" defer></script><%- include('premium-assets') %>
+</head>
+<body class="auth-body" data-mode="<%= mode %>"><div class="auth-ambient" aria-hidden="true"></div>
+<header class="auth-header"><a href="/" class="auth-brand" aria-label="RoleSphere home"><span class="rs-brand-mark" aria-hidden="true">R<span>.</span></span><span class="rs-brand-name">RoleSphere<span class="rs-brand-period">.</span></span></a><nav aria-label="Account navigation"><span class="header-prompt"><%= isRegister ? 'Already part of the team?' : 'New around here?' %></span><a class="header-link" href="/<%= isRegister ? 'login' : 'register' %><%= chosen && chosen !== 'Admin' ? '/' + chosen : '' %>"><%= isRegister ? 'Sign in' : 'Join your team' %><span aria-hidden="true">↗</span></a></nav></header>
+<main id="main-content" class="auth-main <%= chosen ? 'auth-split' : 'auth-select' %>">
+<% if (!chosen) { %>
+ <section class="select-intro"><p class="auth-eyebrow"><span class="status-dot"></span> A SPACE FOR EVERY ROLE</p><h1>Your people.<br>Your work.<span class="serif-word">Your sphere.</span></h1><p class="auth-description"><%= isRegister ? 'Great work starts with belonging. Choose your role to create your account.' : 'One place for your team to do their best work. Choose your role to step inside.' %></p></section>
+ <section class="role-grid" aria-label="Choose your role">
+ <% roles.forEach((r,index) => { %><article class="role-option" style="--entrance-delay:<%= index * 100 %>ms"><div class="role-number">0<%= index + 1 %> / <%= r.toUpperCase() %></div><%- include('glass-folder', { folderRole:r }) %><div class="role-caption"><p><%= roleDescriptions[r] %></p><a class="role-continue" href="/<%= isRegister && r !== 'Admin' ? 'register' : 'login' %>/<%= r %>"><%= isRegister && r === 'Admin' ? 'Admin sign in' : isRegister ? 'Join as ' + r : 'Continue as ' + r %><span aria-hidden="true">↗</span></a></div></article><% }) %>
+ </section><p class="folder-hint"><span aria-hidden="true">⌁</span> Hover to explore. Click a folder to open your options.</p>
+<% } else { %>
+ <section class="auth-story" aria-label="Your RoleSphere workspace"><a class="back-link" href="/<%= mode %>"><span aria-hidden="true">←</span> All roles</a><p class="auth-eyebrow"><span class="status-dot"></span> <%= chosen.toUpperCase() %> WORKSPACE</p><h1><%= isRegister ? 'A new chapter.' : 'Everything in' %><br><span class="serif-word"><%= isRegister ? 'Your people.' : 'your sphere.' %></span></h1><p class="auth-description"><%= roleDescriptions[chosen] %> <%= isRegister ? 'Create your account and make yourself at home.' : 'Pick up where you left off.' %></p><div class="story-folder"><%- include('glass-folder', { folderRole:chosen }) %></div><div class="story-footnote"><span class="tiny-spark" aria-hidden="true">✳</span><p>People, projects and progress.<br><strong>A little more connected.</strong></p></div></section>
+ <section class="auth-form-card" aria-labelledby="form-heading"><div class="form-topline"><span class="role-badge"><span class="status-dot"></span><%= chosen %></span><span class="form-index"><%= isRegister ? '02 / JOIN' : '01 / WELCOME' %></span></div><h2 id="form-heading"><%= isRegister ? 'Make yourself at home.' : 'Welcome back.' %></h2><p class="form-description"><%= isRegister ? 'A few details, and you’re on your way.' : 'Your workspace is right where you left it.' %></p>
+ <div id="auth-error" class="auth-error" role="alert" <%= !errorText ? 'hidden' : '' %>><%= errorText %></div>
+ <% if (hint) { %><div class="auth-role-notice" role="status"><%= hint.message %></div><% } %>
+ <form id="auth-form" autocomplete="on" action="/<%= mode %>" method="post"><input type="hidden" name="role" value="<%= chosen %>">
+ <% if (isRegister) { %><div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Your full name" maxlength="100" required></div><% } %>
+ <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" value="<%= hint ? hint.email : '' %>" placeholder="you@company.com" maxlength="254" required></div>
+ <div class="field"><div class="field-label"><label for="password">Password</label><% if (!isRegister) { %><a href="/forgot-password">Forgot password?</a><% } %></div><div class="password-field"><input id="password" name="password" type="password" autocomplete="<%= isRegister ? 'new-password' : 'current-password' %>" placeholder="<%= isRegister ? 'At least 8 characters' : 'Enter your password' %>" <%= isRegister ? 'minlength=8' : '' %> maxlength="128" required><button type="button" class="password-toggle" data-password-toggle="password" aria-controls="password" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+ <% if (isRegister) { %><div class="field"><label for="confirm-password">Confirm password</label><div class="password-field"><input id="confirm-password" type="password" autocomplete="new-password" placeholder="One more time" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-toggle="confirm-password" aria-controls="confirm-password" aria-label="Show confirmation password" aria-pressed="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div><p class="field-help">Your account will be reviewed by an administrator.</p></div><% } %>
+ <% if (!isRegister) { %><label class="auth-remember"><input type="checkbox" name="rememberMe" id="rememberMe"> Keep me signed in</label><p class="auth-autofill-hint">Remember this email and stay signed in for 30 days on this device. Save your password in your browser to fill it automatically.</p><% } %>
+ <button type="submit" class="auth-submit"><span><%= isRegister ? 'Create my account' : 'Step into your workspace' %></span><span class="submit-arrow" aria-hidden="true">↗</span></button><p id="auth-progress" class="sr-only" role="status"></p>
+ </form>
+ <% if (!isRegister) { %>
+ <div id="google-signin-group">
+ <div class="form-divider"><span>OR CONTINUE WITH</span></div>
+ <% if (typeof googleSignInEnabled !== 'undefined' && googleSignInEnabled) { %>
+ <a class="google-auth-button" href="/api/auth/google/start?role=<%= encodeURIComponent(chosen) %>&amp;intent=login" aria-label="Sign in with Google as <%= chosen %>"><span class="google-auth-mark" aria-hidden="true">G</span> Continue with Google</a>
+ <p class="google-auth-help">First time using Google? Sign in with your password, then connect Google under My profile → Security.</p>
+ <% } else { %>
+ <button type="button" class="google-auth-button" disabled title="Google OAuth setup is required"><span class="google-auth-mark" aria-hidden="true">G</span> Continue with Google</button>
+ <p class="google-auth-help">Google sign-in will be available when the administrator configures Google OAuth.</p>
+ <% } %>
+ </div>
+ <% } %>
+ <div class="form-divider"><span>YOUR WORK, TOGETHER</span></div><p class="form-switch"><% if (chosen === 'Admin') { %>Admin access is provided by your organization.<% } else { %><%= isRegister ? 'Already have a workspace?' : 'First time here?' %> <a href="/<%= isRegister ? 'login' : 'register' %>/<%= chosen %>"><%= isRegister ? 'Sign in' : 'Create an account' %> <span aria-hidden="true">↗</span></a><% } %></p>
+ </section>
+<% } %>
+</main><footer class="auth-footer"><span>© <%= new Date().getFullYear() %> RoleSphere</span><span class="footer-note"><span class="status-dot"></span> Thoughtfully connected.</span><a href="/">Back to home <span aria-hidden="true">↗</span></a></footer><%- include('site-tools') %>
+</body></html>

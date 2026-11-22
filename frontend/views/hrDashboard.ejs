@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Dashboard | RoleSphere</title>
+    <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/rolesphere-redesign.css">
+    <link rel="stylesheet" href="/css/dashboard-background.css">
+    <script defer src="/js/dashboard-background.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script>
+        const MY_USER_ID = <%- jsonForScript(hr._id) %>;
+        const MY_USER_MODEL = 'HR';
+    </script>
+    <style>
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .animate-fade-in-down { animation: fadeInDown 0.3s ease-out; }
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fc-toolbar-title { font-size: 1.25rem !important; font-weight: 700 !important; }
+        .fc-button { background-color: #2563eb !important; border: none !important; }
+        .fc-button:hover { background-color: #1d4ed8 !important; }
+        .fc-day-today { background-color: #eff6ff !important; }
+    </style>
+<script src="/js/legacy/hrDashboard-events.js"></script>
+<%- include('partials/premium-assets') %>
+<link rel="stylesheet" href="/css/finance-dashboard.css"><script defer src="/js/finance-dashboard.js"></script>
+    <link rel="stylesheet" href="/css/rolesphere-redesign.css?v=directory-fix-2">
+</head>
+<body class="rs-dashboard rs-finance-dashboard rs-dot-dashboard bg-gray-50 h-screen flex overflow-hidden">
+<%- include('partials/finance-mobile') %>
+    <!-- Sidebar -->
+    <aside id="rs-role-sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
+        <div class="rs-sidebar-brand"><%- include('partials/brand') %></div>
+        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
+        <!-- ══ ANNOUNCEMENT BELL — pinned top of sidebar ══════════════════ -->
+        <!-- IMPORTANT: This sits OUTSIDE <nav> so it never scrolls away     -->
+        <div class="relative border-b border-gray-100">
+            <button
+                id="ann-toggle-btn"
+                data-rs-click="hrDashboard-0"
+                class="w-full flex items-center justify-between px-4 py-3 hover:bg-blue-50 transition-all group"
+                title="Announcements"
+            >
+                <div class="flex items-center gap-3">
+                    <!-- Megaphone icon -->
+                    <div class="relative">
+                        <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                        </svg>
+                        <!-- Unread badge — hidden when count is 0 -->
+                        <span
+                            id="ann-badge"
+                            class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 hidden"
+                        >0</span>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-700 group-hover:text-primary-600">Announcements</span>
+                </div>
+                <!-- Chevron that rotates when panel opens -->
+                <svg id="ann-chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+            </button>
+
+            <!-- ── Drop-down panel ────────────────────────────────────────── -->
+            <div
+                id="ann-panel"
+                class="hidden bg-blue-50 border-t border-blue-100 max-h-72 overflow-y-auto"
+            >
+                <!-- Header row inside panel -->
+                <div class="flex items-center justify-between px-4 py-2 border-b border-blue-100">
+                    <span class="text-xs font-semibold text-blue-700 uppercase tracking-wider">Latest Announcements</span>
+                    <button data-rs-click="hrDashboard-1" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Mark all read</button>
+                </div>
+                <!-- List of announcements -->
+                <div id="ann-list" class="divide-y divide-blue-100">
+                    <p class="text-xs text-gray-400 px-4 py-3">Loading…</p>
+                </div>
+            </div>
+        </div>
+        <!-- ══ END ANNOUNCEMENT BELL ════════════════════════════════════════ -->
+
+            <button data-rs-click="hrDashboard-2" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="dashboard">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                Dashboard
+            </button>
+            <button data-rs-click="hrDashboard-3" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="leave">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10a2 2 0 002 2h4a2 2 0 002-2V11M9 11h6"></path></svg>
+                Apply Leave
+            </button>
+            <button data-rs-click="hrDashboard-4" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="calendar">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                Task Calendar
+            </button>
+            <button data-rs-click="hrDashboard-5" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="tasks">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                Assigned Tasks
+            </button>
+            <button data-rs-click="hrDashboard-6" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="managers">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 10h14M5 14h14M5 18h14"></path></svg>
+                Managers
+            </button>
+            <button data-rs-click="hrDashboard-7" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="announcements">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
+                Announcements
+            </button>
+            <!-- MY ATTENDANCE (check-in/out + monthly record) -->
+            <button data-rs-click="hrDashboard-8" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="attendance">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                My Attendance
+            </button>
+            <!-- TEAM ATTENDANCE (employee + manager tables) -->
+            <button data-rs-click="hrDashboard-9" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="team-attendance">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                Team Attendance
+            </button>
+            <!-- COMPLAINTS -->
+            <button data-rs-click="hrDashboard-10" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="complaints">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                Removal Complaints
+            </button>
+        <div class="px-6 pt-4 pb-1">
+                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</p>
+            </div>
+            <button data-rs-click="hrDashboard-11" data-section="transfer" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18M16 17l4 4m0 0l-4 4m4-4H3"></path></svg>
+                <span class="text-sm font-medium">Transfer Requests</span>
+            </button>
+            <button data-rs-click="hrDashboard-12" data-section="performance" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                <span class="text-sm font-medium">Performance Reviews</span>
+            </button>
+        </nav>
+        <div class="p-4 border-t border-gray-100">
+            <a href="/hr/reports" class="flex items-center gap-3 px-4 py-3 text-gray-600 rounded-xl hover:bg-gray-100 transition-all font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Export Reports
+            </a>
+            <a href="/hr/logout" class="flex items-center gap-3 px-4 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                Logout
+            </a>
+        </div>
+    <a class="rs-workbench-nav" href="/workbench">Profile, calendar & teams <span aria-hidden="true">↗</span></a><div class="finance-sidebar-footer"><span class="finance-sidebar-status"></span><span>Connected workspace<small>Your people. Your sphere.</small></span></div></aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
+        <div id="rs-dashboard-dots" aria-hidden="true"></div>
+        <header class="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 z-30">
+            <div class="flex items-center gap-4">
+                <button class="md:hidden text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
+                <h2 id="pageTitle" class="text-xl font-bold text-gray-800">HR Dashboard</h2>
+            </div>
+            <div class="flex items-center gap-4">
+                 <div class="text-right hidden sm:block">
+                    <div class="text-sm font-bold text-gray-800"><%= hr.name || 'HR Admin' %></div>
+                    <div class="text-xs text-gray-500"><%= hr.email || 'Human Resources' %></div>
+                </div>
+                <div class="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center text-primary-600 font-bold border-2 border-white shadow-sm">HR</div>
+            </div>
+        </header>
+
+        <div class="rs-dot-scroll flex-1 overflow-y-auto p-6 bg-gray-50">
+
+            <!-- Dashboard Section (Employee List) -->
+            <div id="section-dashboard" class="section-content active">
+                <div class="finance-welcome"><div><p class="finance-eyebrow">HR WORKSPACE</p><h1>Welcome back, <%= hr.name %><span>.</span></h1><p>Here’s what’s happening in your sphere today.</p></div><time><%= new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date()) %></time></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 finance-kpis mb-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Total Employees</p>
+                                <h3 class="text-2xl font-bold text-gray-900" id="stat-employees">...</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Total Managers</p>
+                                <h3 class="text-2xl font-bold text-gray-900" id="stat-managers">...</h3>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                            <div>
+                                <p class="text-sm text-gray-500 font-medium">Pending Manager Tasks</p>
+                                <h3 class="text-2xl font-bold text-gray-900" id="stat-manager-tasks">...</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <%- include('partials/finance-pulse') %>
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-4">
+                        <h3 class="text-lg font-bold text-gray-900">Employee List</h3>
+                        <div class="flex gap-2">
+                             <button data-rs-click="hrDashboard-13" class="text-gray-500 hover:text-primary-600 p-2 rounded-lg transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            </button>
+                            <button data-rs-click="hrDashboard-14" class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition flex items-center gap-2 shadow-sm">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                Add Employee
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full rs-directory-table">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeeList" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leave Application Section -->
+            <div id="section-leave" class="section-content">
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-6 border-b border-gray-100">
+                            <h3 class="text-lg font-bold text-gray-900">Apply for Leave</h3>
+                            <p class="text-sm text-gray-500">Submit a leave request for yourself or on behalf of an employee.</p>
+                        </div>
+                        <div class="p-8">
+                            <form id="leaveForm" class="space-y-6">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">From Date</label>
+                                        <input type="date" id="leaveFrom" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">To Date</label>
+                                        <input type="date" id="leaveTo" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason</label>
+                                    <textarea id="leaveReason" rows="4" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition" placeholder="Please describe the reason for leave..."></textarea>
+                                </div>
+                                <div class="flex justify-end">
+                                    <button type="submit" class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 font-bold transition shadow-sm">Submit Request</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="leaveDetails" class="mt-8 hidden animate-fade-in-down">
+                        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                             <div class="p-6 border-b border-gray-100">
+                                <h3 class="text-lg font-bold text-gray-900">Recent Leave Requests</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">From</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">To</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reason</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaveTableBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Task Calendar Section -->
+            <div id="section-calendar" class="section-content">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-full flex flex-col">
+                    <div class="flex justify-between items-center mb-6">
+                         <div>
+                            <h3 class="text-lg font-bold text-gray-900">Task Calendar</h3>
+                            <p class="text-sm text-gray-500">Assign and track tasks for managers.</p>
+                        </div>
+                    </div>
+                    <div id="calendar" class="flex-1"></div>
+                </div>
+            </div>
+
+            <!-- Managers Section -->
+            <div id="section-managers" class="section-content">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-4">
+                        <h3 class="text-lg font-bold text-gray-900">Managers</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full rs-directory-table rs-directory-two">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                                </tr>
+                            </thead>
+                            <tbody id="managersList" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assigned Tasks Section -->
+            <div id="section-tasks" class="section-content">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-4">
+                        <h3 class="text-lg font-bold text-gray-900">Assigned Tasks</h3>
+                        <button data-rs-click="hrDashboard-15" class="text-sm text-primary-600 hover:underline">Refresh</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Manager</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Deadline</th>
+                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Submission</th>
+                                </tr>
+                            </thead>
+                            <tbody id="assignedTasksList" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Announcements Section -->
+            <div id="section-announcements" class="section-content">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900">Company Announcements</h3>
+                    </div>
+                    <div class="p-6 grid gap-4">
+                        <% if(announcements && announcements.length > 0) { %>
+                            <% announcements.forEach(ann => { %>
+                                <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 hover:shadow-sm transition">
+                                    <div class="flex justify-between items-start">
+                                        <h4 class="text-lg font-bold text-gray-800"><%= ann.title %></h4>
+                                        <span class="text-xs text-gray-500 bg-white px-2 py-1 rounded border border-gray-200"><%= new Date(ann.date).toLocaleDateString() %></span>
+                                    </div>
+                                    <p class="text-gray-600 mt-2"><%= ann.message %></p>
+                                    <% if(ann.attachmentUrl) { %>
+                                        <a href="<%= ann.attachmentUrl %>" target="_blank" class="inline-flex items-center gap-1 mt-3 text-sm text-primary-600 hover:text-primary-700 hover:underline font-medium">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                            View Attachment
+                                        </a>
+                                    <% } %>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <p class="text-gray-500 text-center py-8">No announcements yet.</p>
+                        <% } %>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── MY ATTENDANCE SECTION (Check-in/out + Monthly Record) ── -->
+            <div id="section-attendance" class="section-content">
+                <div class="space-y-6">
+                    <!-- My Own Check In/Out Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <h3 class="font-bold text-gray-800 mb-4 text-lg">My Attendance Today</h3>
+                        <div class="flex items-center justify-between flex-wrap gap-4">
+                            <div>
+                                <p class="text-sm text-gray-500 mb-1">Today — <span id="myAttDate" class="font-medium text-gray-700"></span></p>
+                                <span id="myAttStatus" class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-100 text-gray-600">Not Checked In</span>
+                            </div>
+                            <div class="flex items-center gap-6 text-sm">
+                                <div><p class="text-xs text-gray-400 mb-0.5">Check In</p><p id="myCheckInTime" class="font-mono font-bold text-green-600 text-base">--:--:--</p></div>
+                                <div><p class="text-xs text-gray-400 mb-0.5">Check Out</p><p id="myCheckOutTime" class="font-mono font-bold text-red-500 text-base">--:--:--</p></div>
+                                <div><p class="text-xs text-gray-400 mb-0.5">Duration</p><p id="myDuration" class="font-mono font-bold text-blue-600 text-base">--:--:--</p></div>
+                            </div>
+                            <div class="flex gap-3">
+                                <button id="myCheckInBtn" data-rs-click="hrDashboard-16" class="px-5 py-2 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 transition">Check In</button>
+                                <button id="myCheckOutBtn" data-rs-click="hrDashboard-17" class="px-5 py-2 bg-red-500 text-white text-sm font-semibold rounded-lg hover:bg-red-600 transition hidden">Check Out</button>
+                            </div>
+                        </div>
+                        <div id="myLiveTimer" class="mt-4 text-center hidden">
+                            <p class="text-xs text-gray-400 mb-1">Time since check-in</p>
+                            <p id="myTimerDisplay" class="text-3xl font-mono font-bold text-primary-600">00:00:00</p>
+                        </div>
+                        <div id="mySundayMsg" class="mt-3 hidden"><p class="text-center text-sm font-medium text-yellow-700 bg-yellow-50 border border-yellow-200 rounded-lg py-2">🎉 Today is Sunday — enjoy your holiday!</p></div>
+                    </div>
+
+                    <!-- My Monthly Attendance Record -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                            <h3 class="font-semibold text-gray-800">My Monthly Attendance Record</h3>
+                            <div class="flex items-center gap-2">
+                                <input type="month" id="myAttMonthPicker" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <button data-rs-click="hrDashboard-18" class="px-4 py-1.5 bg-gray-600 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition">View</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-100">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Day</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check In</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check Out</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="myAttBody" class="divide-y divide-gray-50">
+                                    <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Select a month to view your attendance</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── TEAM ATTENDANCE SECTION (Employee + Manager tables) ── -->
+            <div id="section-team-attendance" class="section-content">
+                <div class="space-y-6">
+                    <!-- Employee Attendance Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                            <h3 class="font-semibold text-gray-800">Employee Attendance</h3>
+                            <div class="flex items-center gap-2">
+                                <input type="date" id="empAttDatePicker" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <button data-rs-click="hrDashboard-19" class="px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition">View Day</button>
+                                <input type="month" id="empAttMonthPicker" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <button data-rs-click="hrDashboard-20" class="px-4 py-1.5 bg-gray-600 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition">Monthly</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-100">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check In</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check Out</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="empAttBody" class="divide-y divide-gray-50">
+                                    <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Select a date or month to view</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Manager Attendance Table -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <div class="p-5 border-b border-gray-100 flex items-center justify-between flex-wrap gap-3">
+                            <h3 class="font-semibold text-gray-800">Manager Attendance</h3>
+                            <div class="flex items-center gap-2">
+                                <input type="date" id="mgrAttDatePicker" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <button data-rs-click="hrDashboard-21" class="px-4 py-1.5 bg-primary-600 text-white text-sm font-semibold rounded-lg hover:bg-primary-700 transition">View Day</button>
+                                <input type="month" id="mgrAttMonthPicker" class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                <button data-rs-click="hrDashboard-22" class="px-4 py-1.5 bg-gray-600 text-white text-sm font-semibold rounded-lg hover:bg-gray-700 transition">Monthly</button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-100">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Name</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check In</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Check Out</th>
+                                        <th class="px-5 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Duration</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mgrAttBody" class="divide-y divide-gray-50">
+                                    <tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">Select a date or month to view</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+            <!-- Complaints Section -->
+            <div id="complaintsSection" class="section-content p-6">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-6 border-b border-gray-100">
+                        <h3 class="text-lg font-bold text-gray-900">Employee Removal Complaints</h3>
+                        <p class="text-sm text-gray-500 mt-1">Employees who filed complaints after being removed from a manager's team.</p>
+                    </div>
+                    <div id="complaintsTableContainer" class="overflow-x-auto">
+                        <p class="px-6 py-8 text-center text-gray-400 text-sm">Loading complaints...</p>
+                    </div>
+                </div>
+            </div>
+
+
+        <!-- ── HR Transfer Assignments Panel ────────────────────────────── -->
+        <div id="hrTransferPanel" class="hidden">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">Transfer Requests</h3>
+                <p class="text-sm text-gray-500 mt-0.5">These requests have been approved by the employee's current manager. Assign a new manager to complete the transfer.</p>
+              </div>
+              <button data-rs-click="hrDashboard-23" class="text-sm text-indigo-600 hover:underline">Refresh</button>
+            </div>
+            <div id="hrTransferList"><p class="text-sm text-gray-400">Loading...</p></div>
+          </div>
+        </div>
+
+
+        <!-- HR Performance Reviews Panel -->
+        <div id="hrPerformancePanel" class="hidden">
+          <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <div class="flex items-center justify-between mb-5">
+              <div>
+                <h3 class="text-lg font-bold text-gray-900">All Performance Reviews</h3>
+                <p class="text-sm text-gray-500 mt-0.5">Company-wide view of all submitted reviews.</p>
+              </div>
+              <div class="flex gap-3 items-center">
+                <select id="hr-perf-filter" data-rs-change="hrDashboard-24" class="text-sm px-3 py-1.5 border border-gray-300 rounded-lg">
+                  <option value="">All Ratings</option>
+                  <option value="5">5 Stars</option>
+                  <option value="4">4 Stars</option>
+                  <option value="3">3 Stars</option>
+                  <option value="2">2 Stars</option>
+                  <option value="1">1 Star</option>
+                </select>
+                <button data-rs-click="hrDashboard-25" class="text-sm text-indigo-600 hover:underline">Refresh</button>
+              </div>
+            </div>
+            <!-- Summary -->
+            <div class="grid grid-cols-4 gap-4 mb-6">
+              <div class="bg-indigo-50 rounded-xl p-3 text-center"><p class="text-xl font-bold text-indigo-600" id="hr-perf-total">-</p><p class="text-xs text-gray-500">Total</p></div>
+              <div class="bg-amber-50 rounded-xl p-3 text-center"><p class="text-xl font-bold text-amber-600" id="hr-perf-avg">-</p><p class="text-xs text-gray-500">Avg Rating</p></div>
+              <div class="bg-green-50 rounded-xl p-3 text-center"><p class="text-xl font-bold text-green-600" id="hr-perf-excellent">-</p><p class="text-xs text-gray-500">Excellent (5★)</p></div>
+              <div class="bg-red-50 rounded-xl p-3 text-center"><p class="text-xl font-bold text-red-600" id="hr-perf-poor">-</p><p class="text-xs text-gray-500">Needs Work (1-2★)</p></div>
+            </div>
+            <div id="hr-reviews-list"><p class="text-sm text-gray-400">Loading...</p></div>
+          </div>
+        </div>
+
+    </main>
+
+    <!-- Modals -->
+
+    <!-- Add Employee Modal -->
+    <div id="employeeForm" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative animate-fade-in-down">
+            <button data-rs-click="hrDashboard-26" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h4 class="text-xl font-bold text-gray-900 mb-6">Add New Employee</h4>
+            <form id="addEmployeeForm" class="space-y-4">
+                <input type="text" name="name" placeholder="Employee Name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                <input type="email" name="email" placeholder="Employee Email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                <input type="password" name="password" placeholder="Password" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 font-bold transition">Add Employee</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Employee Modal -->
+    <div id="editEmployeeForm" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative animate-fade-in-down">
+            <button data-rs-click="hrDashboard-27" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h4 class="text-xl font-bold text-gray-900 mb-6">Edit Employee</h4>
+            <form id="updateEmployeeForm" class="space-y-4">
+                <input type="hidden" id="editEmployeeId">
+                <input type="text" id="editName" placeholder="Employee Name" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                <input type="email" id="editEmail" placeholder="Employee Email" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                <input type="password" id="editPassword" placeholder="New Password (optional)" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition">
+                <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 font-bold transition">Update Employee</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Employee/Candidate Modal -->
+    <div id="viewModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative animate-fade-in-down">
+            <button data-rs-click="hrDashboard-28" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h4 class="text-xl font-bold text-gray-900 mb-6">Profile Details</h4>
+            <div id="viewModalContent" class="space-y-3">
+                <!-- Content injected via JS -->
+            </div>
+            <button data-rs-click="hrDashboard-29" class="w-full mt-6 bg-gray-200 text-gray-800 py-2 rounded-lg hover:bg-gray-300 font-bold transition">Close</button>
+        </div>
+    </div>
+
+    <!-- Calendar Task Modal -->
+    <div id="taskModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative animate-fade-in-down">
+            <button data-rs-click="hrDashboard-30" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <h4 class="text-xl font-bold text-gray-900 mb-6">Assign Task</h4>
+            <form id="taskForm" class="space-y-4">
+                <input type="hidden" id="taskDate">
+                <select id="managerSelect" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition"></select>
+                <textarea id="taskDescription" rows="4" placeholder="Task Description" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 outline-none transition"></textarea>
+                <button type="submit" class="w-full bg-primary-600 text-white py-2 rounded-lg hover:bg-primary-700 font-bold transition">Assign Task</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Section Navigation
+        function showSection(sectionId) {
+            // Hide panels when switching to a section
+            var perfPanel = document.getElementById('hrPerformancePanel');
+            var transPanel = document.getElementById('hrTransferPanel');
+            if(perfPanel) perfPanel.classList.add('hidden');
+            if(transPanel) transPanel.classList.add('hidden');
+
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(`section-${sectionId}`).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(el => {
+                if(el.dataset.section === sectionId) {
+                    el.classList.add('bg-primary-50', 'text-primary-600', 'border-primary-600');
+                    el.classList.remove('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+                } else {
+                    el.classList.remove('bg-primary-50', 'text-primary-600', 'border-primary-600');
+                    el.classList.add('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+                }
+            });
+
+            if (sectionId === 'calendar' && calendar) {
+                setTimeout(() => calendar.render(), 100);
+            }
+        }
+
+        // Modal Management
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Employee Management
+        async function fetchEmployees() {
+            try {
+                const response = await fetch("/hr/employees");
+                const employees = await response.json();
+                const employeeList = document.getElementById("employeeList");
+                employeeList.innerHTML = "";
+
+                if (employees.length === 0) {
+                    employeeList.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">No employees found.</td></tr>';
+                    return;
+                }
+
+                employees.forEach((employee, index) => {
+                    const row = document.createElement("tr");
+                    row.className = "hover:bg-gray-50 transition";
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(employee.name)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(employee.email)}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <button data-rs-click="hrDashboard-31" data-rs-arg-0="${escapeHtml(employee._id)}" data-rs-arg-1="${escapeHtml(employee.name)}" data-rs-arg-2="${escapeHtml(employee.email)}" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
+                        </td>
+                    `;
+                    employeeList.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching employees:", error);
+            }
+        }
+
+        async function addEmployee(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch("/hr/add-employee", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+                const result = await response.json();
+                if (result.message) {
+                    fetchEmployees();
+                    closeModal('employeeForm');
+                    event.target.reset();
+                    alert("Employee added successfully!");
+                } else {
+                    alert(result.error);
+                }
+            } catch (err) {
+                alert("Failed to add employee.");
+            }
+        }
+
+        function editEmployee(id, name, email) {
+            document.getElementById("editEmployeeId").value = id;
+            document.getElementById("editName").value = name;
+            document.getElementById("editEmail").value = email;
+            document.getElementById("editPassword").value = "";
+            openModal('editEmployeeForm');
+        }
+
+        document.getElementById("updateEmployeeForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const id = document.getElementById("editEmployeeId").value;
+            const updatedEmployee = {
+                name: document.getElementById("editName").value,
+                email: document.getElementById("editEmail").value
+            };
+            const password = document.getElementById("editPassword").value;
+            if (password) updatedEmployee.password = password;
+
+            try {
+                const response = await fetch(`/hr/edit-employee/${id}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(updatedEmployee)
+                });
+
+                if (response.ok) {
+                    alert("Employee updated successfully!");
+                    closeModal('editEmployeeForm');
+                    fetchEmployees();
+                } else {
+                    alert("Error updating employee");
+                }
+            } catch (err) {
+                alert("Failed to update employee.");
+            }
+        });
+
+        document.getElementById("addEmployeeForm").addEventListener("submit", addEmployee);
+
+        async function viewEmployee(id) {
+            try {
+                const response = await fetch(`/hr/view-employee/${id}`);
+                const data = await response.json();
+                if (data.error) { alert(data.error); return; }
+                showProfileModal({
+                    Name: data.name || '—',
+                    Email: data.email || '—',
+                    Role: data.role || '—',
+                    Department: data.department || '—',
+                    Salary: data.salary ? `₹${data.salary}` : '—',
+                    Manager: data.managerId ? data.managerId : 'Not assigned'
+                });
+            } catch (e) { alert("Error fetching details"); }
+        }
+
+        async function loadManagers() {
+            try {
+                const res = await fetch('/hr/managers');
+                const data = await res.json();
+                const list = document.getElementById('managersList');
+                const select = document.getElementById('managerSelect');
+                if (list) list.innerHTML = '';
+                if (select) select.innerHTML = '<option value="" disabled selected>Select a manager</option>';
+                if (data.success && data.managers.length) {
+                    data.managers.forEach(m => {
+                        if (list) {
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(m.name)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(m.email)}</td>
+                            `;
+                            list.appendChild(tr);
+                        }
+                        if (select) {
+                            const opt = document.createElement('option');
+                            opt.value = m.name;
+                            opt.textContent = m.name;
+                            select.appendChild(opt);
+                        }
+                    });
+                }
+            } catch (e) { console.error('Failed to load managers', e); }
+        }
+
+        async function loadAssignedTasks() {
+            try {
+                const res = await fetch('/hr/assignedTasks');
+                const data = await res.json();
+                const list = document.getElementById('assignedTasksList');
+                if (list) {
+                    list.innerHTML = '';
+                    if (data.success && data.tasks.length) {
+                        data.tasks.forEach(task => {
+                            const tr = document.createElement('tr');
+                            const submissionLink = task.submission ?
+                                `<a href="/${escapeHtml(task.submission)}" target="_blank" class="text-primary-600 hover:underline">View File</a>` :
+                                '<span class="text-gray-400">No file</span>';
+                            tr.innerHTML = `
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(task.title)}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${task.managerId ? task.managerId.name : 'Unknown'}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${new Date(task.deadline).toLocaleDateString()}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <span class="px-2 py-1 text-xs font-semibold rounded-full ${
+                                        task.status === 'Completed' ? 'bg-green-100 text-green-800' :
+                                        task.status === 'Submitted' ? 'bg-blue-100 text-blue-800' :
+                                        'bg-yellow-100 text-yellow-800'
+                                    }">${escapeHtml(task.status)}</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">${submissionLink}</td>
+                            `;
+                            list.appendChild(tr);
+                        });
+                    } else {
+                        list.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-gray-500">No tasks assigned yet.</td></tr>';
+                    }
+                }
+            } catch (e) { console.error('Failed to load tasks', e); }
+        }
+
+        async function loadStats() {
+            try {
+                const res = await fetch('/hr/stats');
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('stat-employees').textContent = data.stats.employeeCount;
+                    document.getElementById('stat-managers').textContent = data.stats.managerCount;
+                    document.getElementById('stat-manager-tasks').textContent = data.stats.pendingManagerTasks;
+                }
+            } catch (e) { console.error('Failed to load stats', e); }
+        }
+
+        function showProfileModal(data) {
+            const content = document.getElementById("viewModalContent");
+            content.innerHTML = Object.entries(data).map(([key, value]) => `
+                <div class="flex justify-between border-b border-gray-100 py-2 last:border-0">
+                    <span class="font-medium text-gray-500">${key}:</span>
+                    <span class="text-gray-900 font-semibold">${value}</span>
+                </div>
+            `).join('');
+            openModal('viewModal');
+        }
+
+        // Calendar Logic
+        let calendar;
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                selectable: true,
+                headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+                dateClick: function (info) {
+                    document.getElementById('taskDate').value = info.dateStr;
+                    openModal('taskModal');
+                },
+                events: [],
+                eventClick: function(info) {
+                    if(confirm("Mark this task as completed?")) {
+                        info.event.setProp('title', '✅ ' + info.event.title);
+                        info.event.setProp('backgroundColor', '#10b981');
+                        info.event.setProp('borderColor', '#10b981');
+                    }
+                }
+            });
+            calendar.render();
+        });
+
+        document.getElementById('taskForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const date = document.getElementById('taskDate').value;
+            const managerId = document.getElementById('managerSelect').value;
+            const description = document.getElementById('taskDescription').value;
+            try {
+                const res = await fetch('/hr/assignTask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ managerId, title: 'Task Assigned', description, deadline: date })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    calendar.addEvent({ title: `Task Assigned`, start: date, allDay: true, backgroundColor: '#3b82f6', borderColor: '#3b82f6' });
+                    closeModal('taskModal');
+                    e.target.reset();
+                    loadAssignedTasks();
+                    alert('Task assigned successfully!');
+                } else { alert(data.error || 'Failed to assign task'); }
+            } catch (err) { alert('Failed to assign task'); }
+        });
+
+        // Leave Application Logic
+        document.getElementById('leaveForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
+            const from = document.getElementById('leaveFrom').value;
+            const to = document.getElementById('leaveTo').value;
+            const reason = document.getElementById('leaveReason').value;
+            try {
+                const res = await fetch('/hr/applyLeave', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ startDate: from, endDate: to, reason })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    const tableBody = document.getElementById('leaveTableBody');
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${from}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${to}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">${reason}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Pending</span>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                    document.getElementById('leaveDetails').classList.remove('hidden');
+                    event.target.reset();
+                    alert("Leave request submitted successfully!");
+                } else { alert(data.error || 'Failed to submit leave'); }
+            } catch (e) { alert('Failed to submit leave'); }
+        });
+
+        // ── Attendance System ── //
+        const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        let attInterval = null;
+
+        function formatDuration(ci, co) {
+            if (!ci||ci==='-'||!co||co==='-') return '--:--:--';
+            const ts = t => { const [h,m,s]=t.split(':').map(Number); return h*3600+m*60+s; };
+            let d=ts(co)-ts(ci); if(d<0)d+=86400;
+            return [Math.floor(d/3600),Math.floor((d%3600)/60),d%60].map(n=>String(n).padStart(2,'0')).join(':');
+        }
+
+        function startLiveTimer(ci) {
+            document.getElementById('myLiveTimer').classList.remove('hidden');
+            if (attInterval) clearInterval(attInterval);
+            const ts = t => { const [h,m,s]=t.split(':').map(Number); return h*3600+m*60+s; };
+            const start = ts(ci);
+            attInterval = setInterval(() => {
+                const now = new Date();
+                let d = (now.getHours()*3600+now.getMinutes()*60+now.getSeconds()) - start;
+                if(d<0)d=0;
+                document.getElementById('myTimerDisplay').innerText = [Math.floor(d/3600),Math.floor((d%3600)/60),d%60].map(n=>String(n).padStart(2,'0')).join(':');
+            }, 1000);
+        }
+
+        async function myCheckIn() {
+            if (!MY_USER_ID) return alert('Session expired. Please login again.');
+            const r = await fetch('/api/attendance/checkin', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({userId:MY_USER_ID, userModel:MY_USER_MODEL}) });
+            const d = await r.json();
+            if (!d.success) return alert(d.error||'Check-in failed');
+            document.getElementById('myCheckInTime').innerText = d.record.checkIn;
+            document.getElementById('myAttStatus').innerText='Checked In';
+            document.getElementById('myAttStatus').className='inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700';
+            document.getElementById('myCheckInBtn').classList.add('hidden');
+            document.getElementById('myCheckOutBtn').classList.remove('hidden');
+            startLiveTimer(d.record.checkIn);
+        }
+
+        async function myCheckOut() {
+            if (!MY_USER_ID) return;
+            const r = await fetch('/api/attendance/checkout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({userId:MY_USER_ID}) });
+            const d = await r.json();
+            if (!d.success) return alert(d.error||'Check-out failed');
+            clearInterval(attInterval);
+            document.getElementById('myLiveTimer').classList.add('hidden');
+            document.getElementById('myCheckOutTime').innerText = d.record.checkOut;
+            document.getElementById('myDuration').innerText = formatDuration(d.record.checkIn, d.record.checkOut);
+            document.getElementById('myAttStatus').innerText='Checked Out';
+            document.getElementById('myAttStatus').className='inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700';
+            document.getElementById('myCheckOutBtn').classList.add('hidden');
+        }
+
+        async function loadMyAttendanceStatus() {
+            if (!MY_USER_ID) return;
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('myAttDate').innerText = today + ' (' + DAYS[new Date().getDay()] + ')';
+            if (new Date().getDay()===0) {
+                document.getElementById('mySundayMsg').classList.remove('hidden');
+                document.getElementById('myCheckInBtn').disabled=true;
+                return;
+            }
+            try {
+                const r = await fetch('/api/attendance/today-status?userId='+MY_USER_ID);
+                const d = await r.json();
+                if (!d.record) return;
+                const rec = d.record;
+                document.getElementById('myCheckInTime').innerText = rec.checkIn||'--:--:--';
+                document.getElementById('myCheckOutTime').innerText = rec.checkOut||'--:--:--';
+                document.getElementById('myDuration').innerText = formatDuration(rec.checkIn, rec.checkOut);
+                if (rec.checkIn && !rec.checkOut) {
+                    document.getElementById('myAttStatus').innerText='Checked In';
+                    document.getElementById('myAttStatus').className='inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-700';
+                    document.getElementById('myCheckInBtn').classList.add('hidden');
+                    document.getElementById('myCheckOutBtn').classList.remove('hidden');
+                    startLiveTimer(rec.checkIn);
+                } else if (rec.checkIn && rec.checkOut) {
+                    document.getElementById('myAttStatus').innerText='Checked Out';
+                    document.getElementById('myAttStatus').className='inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-blue-100 text-blue-700';
+                    document.getElementById('myCheckInBtn').classList.add('hidden');
+                    document.getElementById('myCheckOutBtn').classList.add('hidden');
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        // My Monthly Attendance Record
+        async function loadMyMonthlyAttendance() {
+            const m = document.getElementById('myAttMonthPicker').value;
+            if (!m) return alert('Please select a month');
+            try {
+                const r = await fetch('/api/attendance/my-history?userId='+MY_USER_ID+'&month='+m);
+                const d = await r.json();
+                const records = d.records || [];
+                const [year,mon] = m.split('-').map(Number);
+                const dim = new Date(year,mon,0).getDate();
+                let html = '';
+                for(let day=1;day<=dim;day++){
+                    const ds=`${year}-${String(mon).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                    const dow=new Date(ds).getDay();
+                    const isSun=dow===0;
+                    const rec=records.find(r=>r.date===ds);
+                    let badge,rowCls='';
+                    if(isSun){badge='<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700">Holiday</span>';rowCls='bg-purple-50';}
+                    else if(rec?.checkIn){badge='<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Present</span>';}
+                    else{badge='<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-100 text-red-700">Absent</span>';rowCls='bg-red-50';}
+                    html+=`<tr class="${rowCls}"><td class="px-5 py-3 text-sm text-gray-700">${ds}</td><td class="px-5 py-3 text-sm font-medium ${isSun?'text-purple-600':'text-gray-700'}">${escapeHtml(DAYS[dow])}</td><td class="px-5 py-3">${badge}</td><td class="px-5 py-3 text-sm font-mono ${rec?.checkIn?'text-green-600 font-semibold':'text-gray-400'}">${rec?.checkIn||'-'}</td><td class="px-5 py-3 text-sm font-mono ${rec?.checkOut?'text-red-500 font-semibold':'text-gray-400'}">${rec?.checkOut||'-'}</td><td class="px-5 py-3 text-sm font-mono text-blue-600">${formatDuration(rec?.checkIn,rec?.checkOut)}</td></tr>`;
+                }
+                document.getElementById('myAttBody').innerHTML = html || '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No records found</td></tr>';
+            } catch(e) { console.error(e); alert('Failed to load attendance'); }
+        }
+
+        // Employee Attendance (Team panel)
+        async function loadEmpAttByDate() {
+            const dateVal = document.getElementById('empAttDatePicker').value;
+            if (!dateVal) return alert('Please select a date');
+            try {
+                const r = await fetch(`/api/attendance/employees?date=${dateVal}`);
+                const d = await r.json();
+                const tbody = document.getElementById('empAttBody');
+                tbody.innerHTML = '';
+                if (d.records && d.records.length > 0) {
+                    d.records.forEach(rec => {
+                        const tr = document.createElement('tr');
+                        let status = rec.checkIn ? (rec.checkOut ? 'Present' : 'Checked In') : 'Absent';
+                        tr.innerHTML = `
+                            <td class="px-5 py-3 text-sm font-medium text-gray-900">${rec.employeeName || 'Unknown'}</td>
+                            <td class="px-5 py-3 text-sm text-gray-600">${dateVal}</td>
+                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${rec.checkIn ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${status}</span></td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkIn || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkOut || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${formatDuration(rec.checkIn, rec.checkOut)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No records found for this date</td></tr>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadEmpAttByMonth() {
+            const monthVal = document.getElementById('empAttMonthPicker').value;
+            if (!monthVal) return alert('Please select a month');
+            try {
+                const r = await fetch(`/api/attendance/employees?month=${monthVal}`);
+                const d = await r.json();
+                const tbody = document.getElementById('empAttBody');
+                tbody.innerHTML = '';
+                if (d.records && d.records.length > 0) {
+                    d.records.forEach(rec => {
+                        const tr = document.createElement('tr');
+                        let status = rec.checkIn ? (rec.checkOut ? 'Present' : 'Checked In') : 'Absent';
+                        tr.innerHTML = `
+                            <td class="px-5 py-3 text-sm font-medium text-gray-900">${rec.employeeName || 'Unknown'}</td>
+                            <td class="px-5 py-3 text-sm text-gray-600">${escapeHtml(rec.date)}</td>
+                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${rec.checkIn ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${status}</span></td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkIn || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkOut || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${formatDuration(rec.checkIn, rec.checkOut)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No records found for this month</td></tr>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        // Manager Attendance (Team panel)
+        async function loadMgrAttByDate() {
+            const dateVal = document.getElementById('mgrAttDatePicker').value;
+            if (!dateVal) return alert('Please select a date');
+            try {
+                const r = await fetch(`/api/attendance/managers?date=${dateVal}`);
+                const d = await r.json();
+                const tbody = document.getElementById('mgrAttBody');
+                tbody.innerHTML = '';
+                if (d.records && d.records.length > 0) {
+                    d.records.forEach(rec => {
+                        const tr = document.createElement('tr');
+                        let status = rec.checkIn ? (rec.checkOut ? 'Present' : 'Checked In') : 'Absent';
+                        tr.innerHTML = `
+                            <td class="px-5 py-3 text-sm font-medium text-gray-900">${rec.managerName || 'Unknown'}</td>
+                            <td class="px-5 py-3 text-sm text-gray-600">${dateVal}</td>
+                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${rec.checkIn ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${status}</span></td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkIn || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkOut || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${formatDuration(rec.checkIn, rec.checkOut)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No records found for this date</td></tr>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function loadMgrAttByMonth() {
+            const monthVal = document.getElementById('mgrAttMonthPicker').value;
+            if (!monthVal) return alert('Please select a month');
+            try {
+                const r = await fetch(`/api/attendance/managers?month=${monthVal}`);
+                const d = await r.json();
+                const tbody = document.getElementById('mgrAttBody');
+                tbody.innerHTML = '';
+                if (d.records && d.records.length > 0) {
+                    d.records.forEach(rec => {
+                        const tr = document.createElement('tr');
+                        let status = rec.checkIn ? (rec.checkOut ? 'Present' : 'Checked In') : 'Absent';
+                        tr.innerHTML = `
+                            <td class="px-5 py-3 text-sm font-medium text-gray-900">${rec.managerName || 'Unknown'}</td>
+                            <td class="px-5 py-3 text-sm text-gray-600">${escapeHtml(rec.date)}</td>
+                            <td class="px-5 py-3"><span class="px-2 py-0.5 rounded-full text-xs font-semibold ${rec.checkIn ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}">${status}</span></td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkIn || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${rec.checkOut || '-'}</td>
+                            <td class="px-5 py-3 text-sm font-mono">${formatDuration(rec.checkIn, rec.checkOut)}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-gray-400">No records found for this month</td></tr>';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection('dashboard');
+            loadManagers();
+            loadAssignedTasks();
+            loadStats();
+            fetchEmployees();
+            const now = new Date();
+            const m = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            if (document.getElementById('empAttMonthPicker')) document.getElementById('empAttMonthPicker').value = m;
+            if (document.getElementById('mgrAttMonthPicker')) document.getElementById('mgrAttMonthPicker').value = m;
+            if (document.getElementById('myAttMonthPicker')) document.getElementById('myAttMonthPicker').value = m;
+            loadMyAttendanceStatus();
+        });
+
+        // ── Removal Complaints ────────────────────────────────────────────
+        async function loadComplaints() {
+            const container = document.getElementById('complaintsTableContainer');
+            container.innerHTML = '<p class="px-6 py-8 text-center text-gray-400 text-sm">Loading...</p>';
+            try {
+                const res  = await fetch('/api/complaints/all');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+
+                const complaints = data.complaints;
+                if (!complaints || complaints.length === 0) {
+                    container.innerHTML = '<p class="px-6 py-8 text-center text-gray-400 text-sm">No complaints filed yet.</p>';
+                    return;
+                }
+
+                let rows = '';
+                complaints.forEach(c => {
+                    const date = new Date(c.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const statusBadge = c.status === 'Pending'
+                        ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">Pending</span>'
+                        : c.status === 'Reviewed'
+                        ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">Reviewed</span>'
+                        : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-green-100 text-green-700">Resolved</span>';
+
+                    const fileBtn = c.attachmentPath
+                        ? `<a href="/${c.attachmentPath.replace(/\\/g,'/')}" target="_blank" class="inline-flex items-center gap-1 px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded hover:bg-gray-200 transition">
+                               <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                               ${c.attachmentName || 'View File'}
+                           </a>`
+                        : '<span class="text-xs text-gray-400">No file</span>';
+
+                    rows += `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-5 py-4 text-sm font-medium text-gray-900">${escapeHtml(c.employeeName)}<br><span class="text-xs text-gray-400 font-normal">${escapeHtml(c.employeeEmail)}</span></td>
+                            <td class="px-5 py-4 text-sm text-gray-600">${escapeHtml(c.managerName)}</td>
+                            <td class="px-5 py-4 text-sm text-gray-600 max-w-xs"><div class="truncate" title="${escapeHtml(c.removalReason)}">${escapeHtml(c.removalReason)}</div></td>
+                            <td class="px-5 py-4 text-sm text-gray-600 max-w-xs"><div class="truncate" title="${escapeHtml(c.complaintText)}">${escapeHtml(c.complaintText)}</div></td>
+                            <td class="px-5 py-4">${fileBtn}</td>
+                            <td class="px-5 py-4 text-xs text-gray-500">${date}</td>
+                            <td class="px-5 py-4">${statusBadge}</td>
+                            <td class="px-5 py-4">
+                                <select data-rs-change="hrDashboard-32" data-rs-arg-0="${escapeHtml(c._id)}" class="text-xs border border-gray-300 rounded-lg px-2 py-1 focus:ring-1 focus:ring-blue-400">
+                                    <option value="Pending"  ${c.status==='Pending'  ? 'selected':''}>Pending</option>
+                                    <option value="Reviewed" ${c.status==='Reviewed' ? 'selected':''}>Reviewed</option>
+                                    <option value="Resolved" ${c.status==='Resolved' ? 'selected':''}>Resolved</option>
+                                </select>
+                            </td>
+                            <td class="px-5 py-4">
+                                <input type="text" value="${c.hrNote || ''}" placeholder="Add note..." id="note_${escapeHtml(c._id)}"
+                                    class="text-xs border border-gray-300 rounded-lg px-2 py-1 w-32 focus:ring-1 focus:ring-blue-400">
+                                <button data-rs-click="hrDashboard-33" data-rs-arg-0="${escapeHtml(c._id)}" class="ml-1 text-xs text-blue-600 hover:underline">Save</button>
+                            </td>
+                        </tr>`;
+                });
+
+                container.innerHTML = `
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Manager</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Removal Reason</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Complaint</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">File</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">Update</th>
+                                <th class="px-5 py-3 text-left text-xs font-medium text-gray-500 uppercase">HR Note</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100">${rows}</tbody>
+                    </table>`;
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<p class="px-6 py-8 text-center text-red-400 text-sm">Failed to load complaints.</p>';
+            }
+        }
+
+        async function updateComplaintStatus(complaintId, status) {
+            try {
+                const noteInput = document.getElementById('note_' + complaintId);
+                const hrNote = noteInput ? noteInput.value : '';
+                const res = await fetch('/api/complaints/update-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ complaintId, status, hrNote })
+                });
+                const data = await res.json();
+                if (!data.success) alert('Failed to update status');
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        async function saveHrNote(complaintId) {
+            const noteInput = document.getElementById('note_' + complaintId);
+            const hrNote = noteInput ? noteInput.value : '';
+            const selectEl = document.querySelector(`tr td select[onchange*="${complaintId}"]`);
+            const status = selectEl ? selectEl.value : 'Pending';
+            try {
+                const res = await fetch('/api/complaints/update-status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ complaintId, status, hrNote })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    noteInput.style.borderColor = '#10b981';
+                    setTimeout(() => noteInput.style.borderColor = '', 1500);
+                }
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // ── HR Transfer Assignments ────────────────────────────────────────
+        async function loadHRTransfers() {
+            try {
+                const [transferRes, managerRes] = await Promise.all([
+                    fetch('/api/transfer/hr-requests'),
+                    fetch('/hr/managers')
+                ]);
+                const transferData = await transferRes.json();
+                const managerData  = await managerRes.json();
+                const container    = document.getElementById('hrTransferList');
+
+                if (!transferData.success || !transferData.requests.length) {
+                    container.innerHTML = '<p class="text-sm text-gray-400">No pending transfer requests to review.</p>';
+                    return;
+                }
+
+                const managerOptions = (managerData.managers || [])
+                    .map(m => `<option value="${escapeHtml(m._id)}">${escapeHtml(m.name)}</option>`)
+                    .join('');
+
+                container.innerHTML = transferData.requests.map(r => `
+                    <div class="border border-gray-200 rounded-xl p-5 mb-3">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">${escapeHtml(r.employeeName)}</p>
+                                <p class="text-xs text-gray-500">${escapeHtml(r.employeeEmail)}</p>
+                                <p class="text-sm text-gray-700 mt-2"><span class="font-medium">Current Manager:</span> ${escapeHtml(r.currentManagerName)}</p>
+                                <p class="text-sm text-gray-700"><span class="font-medium">Reason:</span> ${escapeHtml(r.reason)}</p>
+                                ${r.managerNote ? `<p class="text-xs text-gray-500 mt-1">Manager note: <em>${escapeHtml(r.managerNote)}</em></p>` : ''}
+                                <p class="text-xs text-gray-400 mt-1">Requested: ${new Date(r.createdAt).toLocaleDateString('en-IN')}</p>
+                            </div>
+                            <span class="text-xs px-2.5 py-1 rounded-full font-semibold bg-green-100 text-green-700">Manager Approved</span>
+                        </div>
+                        <div class="flex flex-wrap gap-2 items-center mt-3">
+                            <select id="newMgr_${escapeHtml(r._id)}" class="text-sm px-3 py-1.5 border border-gray-300 rounded-lg min-w-[180px]">
+                                <option value="">Select new manager...</option>
+                                ${managerOptions}
+                            </select>
+                            <input id="hrNote_${escapeHtml(r._id)}" type="text" placeholder="Optional note..."
+                                class="text-sm px-3 py-1.5 border border-gray-300 rounded-lg flex-1 min-w-[160px]">
+                            <button data-rs-click="hrDashboard-34" data-rs-arg-0="${escapeHtml(r._id)}"
+                                class="px-4 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition">Assign & Transfer</button>
+                            <button data-rs-click="hrDashboard-35" data-rs-arg-0="${escapeHtml(r._id)}"
+                                class="px-4 py-1.5 bg-red-500 text-white text-sm font-medium rounded-lg hover:bg-red-600 transition">Reject</button>
+                        </div>
+                        <p id="hrTransferMsg_${escapeHtml(r._id)}" class="text-xs mt-2 hidden"></p>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('HR transfer load error:', err);
+            }
+        }
+
+        async function assignTransfer(transferId) {
+            const newManagerId = document.getElementById(`newMgr_${transferId}`)?.value;
+            const hrNote       = document.getElementById(`hrNote_${transferId}`)?.value || '';
+            const msg          = document.getElementById(`hrTransferMsg_${transferId}`);
+
+            if (!newManagerId) {
+                if (msg) { msg.textContent = 'Please select a new manager first.'; msg.classList.remove('hidden'); msg.className = 'text-xs mt-2 text-red-600'; }
+                return;
+            }
+            try {
+                const res  = await fetch('/api/transfer/hr-assign', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ transferId, newManagerId, hrNote })
+                });
+                const data = await res.json();
+                if (msg) { msg.classList.remove('hidden'); }
+                if (data.success) {
+                    if (msg) { msg.textContent = '\u2705 ' + data.message; msg.className = 'text-xs mt-2 text-green-600'; }
+                    setTimeout(() => loadHRTransfers(), 1200);
+                } else {
+                    if (msg) { msg.textContent = data.error || 'Failed.'; msg.className = 'text-xs mt-2 text-red-600'; }
+                }
+            } catch (err) {
+                console.error('Assign transfer error:', err);
+            }
+        }
+
+        async function rejectTransferHR(transferId) {
+            const hrNote = document.getElementById(`hrNote_${transferId}`)?.value || '';
+            const msg    = document.getElementById(`hrTransferMsg_${transferId}`);
+            try {
+                const res  = await fetch('/api/transfer/hr-reject', {
+                    method:  'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body:    JSON.stringify({ transferId, hrNote })
+                });
+                const data = await res.json();
+                if (msg) { msg.classList.remove('hidden'); }
+                if (data.success) {
+                    if (msg) { msg.textContent = '\u2705 Request rejected.'; msg.className = 'text-xs mt-2 text-green-600'; }
+                    setTimeout(() => loadHRTransfers(), 1000);
+                } else {
+                    if (msg) { msg.textContent = data.error || 'Failed.'; msg.className = 'text-xs mt-2 text-red-600'; }
+                }
+            } catch (err) {
+                console.error('HR reject error:', err);
+            }
+        }
+
+        function showHRTransferPanel() {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-primary-50', 'text-primary-600', 'border-primary-600');
+                el.classList.add('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+            });
+            // Hide other panel
+            document.getElementById('hrPerformancePanel').classList.add('hidden');
+            // Show this panel + highlight nav
+            document.getElementById('hrTransferPanel').classList.remove('hidden');
+            document.querySelectorAll('[data-section="transfer"]').forEach(el => {
+                el.classList.add('bg-primary-50', 'text-primary-600', 'border-primary-600');
+                el.classList.remove('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+            });
+            loadHRTransfers();
+        }
+
+        // ── HR Performance Reviews ───────────────────────────────────────────
+        var _allHRReviews = [];
+
+        function showHRPerformancePanel() {
+            // Hide all sections
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('bg-primary-50', 'text-primary-600', 'border-primary-600');
+                el.classList.add('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+            });
+            // Hide other panel
+            document.getElementById('hrTransferPanel').classList.add('hidden');
+            // Show this panel + highlight nav
+            document.getElementById('hrPerformancePanel').classList.remove('hidden');
+            document.querySelectorAll('[data-section="performance"]').forEach(el => {
+                el.classList.add('bg-primary-50', 'text-primary-600', 'border-primary-600');
+                el.classList.remove('text-gray-600', 'hover:bg-gray-50', 'border-transparent');
+            });
+            loadHRAllReviews();
+        }
+
+        async function loadHRAllReviews() {
+            var listEl = document.getElementById('hr-reviews-list');
+            listEl.innerHTML = '<p class="text-sm text-gray-400">Loading...</p>';
+            try {
+                var res  = await fetch('/api/performance/all');
+                var data = await res.json();
+                if (!data.success || !data.reviews.length) {
+                    listEl.innerHTML = '<p class="text-sm text-gray-400">No performance reviews submitted yet.</p>';
+                    return;
+                }
+                _allHRReviews = data.reviews;
+                updateHRStats(data.reviews);
+                renderHRReviews(data.reviews);
+            } catch(err) {
+                listEl.innerHTML = '<p class="text-sm text-red-400">Failed to load.</p>';
+            }
+        }
+
+        function filterHRReviews() {
+            var filter = document.getElementById('hr-perf-filter').value;
+            var filtered = filter ? _allHRReviews.filter(function(r){return r.rating==filter;}) : _allHRReviews;
+            renderHRReviews(filtered);
+        }
+
+        function updateHRStats(reviews) {
+            document.getElementById('hr-perf-total').textContent = reviews.length;
+            var avg = (reviews.reduce(function(s,r){return s+r.rating;},0)/reviews.length).toFixed(1);
+            document.getElementById('hr-perf-avg').textContent = avg+'&#9733;';
+            document.getElementById('hr-perf-excellent').textContent = reviews.filter(function(r){return r.rating===5;}).length;
+            document.getElementById('hr-perf-poor').textContent = reviews.filter(function(r){return r.rating<=2;}).length;
+        }
+
+        function renderHRReviews(reviews) {
+            var listEl = document.getElementById('hr-reviews-list');
+            if (!reviews.length) { listEl.innerHTML='<p class="text-sm text-gray-400">No reviews match this filter.</p>'; return; }
+            var ratingLabels3 = {1:'Poor',2:'Below Average',3:'Average',4:'Good',5:'Excellent'};
+            var ratingBg = {1:'bg-red-100 text-red-700',2:'bg-orange-100 text-orange-700',3:'bg-amber-100 text-amber-700',4:'bg-blue-100 text-blue-700',5:'bg-green-100 text-green-700'};
+            listEl.innerHTML = '<div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200">'+
+                '<thead class="bg-gray-50"><tr>'+
+                '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>'+
+                '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Period</th>'+
+                '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>'+
+                '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reviewer</th>'+
+                '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Comments</th>'+
+                '<th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>'+
+                '</tr></thead>'+
+                '<tbody class="bg-white divide-y divide-gray-100">'+
+                reviews.map(function(r){
+                    var emp = r.employeeId;
+                    return '<tr class="hover:bg-gray-50">'+
+                        '<td class="px-4 py-3"><p class="text-sm font-semibold text-gray-900">'+(emp&&emp.name?emp.name:'Unknown')+'</p><p class="text-xs text-gray-400">'+(emp&&emp.email?emp.email:'')+'</p></td>'+
+                        '<td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">'+r.period+'</td>'+
+                        '<td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 text-xs font-bold rounded-full '+ratingBg[r.rating]+'">'+r.rating+'&#9733; '+ratingLabels3[r.rating]+'</span></td>'+
+                        '<td class="px-4 py-3 text-xs text-gray-600 whitespace-nowrap">'+r.reviewerName+'<br><span class="text-gray-400">'+r.reviewerModel+'</span></td>'+
+                        '<td class="px-4 py-3 text-xs text-gray-600 max-w-xs">'+r.comments.substring(0,100)+(r.comments.length>100?'...':'')+'</td>'+
+                        '<td class="px-4 py-3 text-xs text-gray-400 whitespace-nowrap">'+new Date(r.createdAt).toLocaleDateString('en-IN')+'</td>'+
+                    '</tr>';
+                }).join('')+
+                '</tbody></table></div>';
+        }
+
+</script>
+
+    <!-- ══ ANNOUNCEMENT SYSTEM JS ══════════════════════════════════════════ -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+    (function() {
+        /* ── Socket connection ─────────────────────────────────────────── */
+        const _socket = typeof io !== 'undefined' ? io() : null;
+        let _annPanelOpen = false;
+
+        /* ── On socket connect: request unread count immediately ──────── */
+        if (_socket) {
+            _socket.on('connect', function() {
+                _socket.emit('notifications:get_count');
+            });
+
+            /* Real-time: new announcement arrived ─────────────────────── */
+            _socket.on('announcement:new', function(ann) {
+                // Increment badge
+                const badge = document.getElementById('ann-badge');
+                if (badge) {
+                    const cur = parseInt(badge.textContent) || 0;
+                    _setBadge(cur + 1);
+                }
+                // Prepend to list if panel is open
+                if (_annPanelOpen) {
+                    _prependAnnouncement(ann);
+                } else {
+                    // Reload list next time panel opens
+                    _annListDirty = true;
+                }
+                // Flash button
+                const btn = document.getElementById('ann-toggle-btn');
+                if (btn) {
+                    btn.classList.add('bg-blue-100');
+                    setTimeout(function() { btn.classList.remove('bg-blue-100'); }, 1500);
+                }
+            });
+        }
+
+        let _annListDirty = true; // force first load
+
+        /* ── Toggle panel open/close ───────────────────────────────────── */
+        window.toggleAnnouncementPanel = function() {
+            _annPanelOpen = !_annPanelOpen;
+            const panel   = document.getElementById('ann-panel');
+            const chevron = document.getElementById('ann-chevron');
+            if (!panel) return;
+
+            if (_annPanelOpen) {
+                panel.classList.remove('hidden');
+                if (chevron) chevron.style.transform = 'rotate(180deg)';
+                if (_annListDirty) _loadAnnouncementList();
+                // Mark seen after 1 second (gives user time to read)
+                setTimeout(markAllAnnouncementsSeen, 1000);
+            } else {
+                panel.classList.add('hidden');
+                if (chevron) chevron.style.transform = '';
+            }
+        };
+
+        /* ── Load announcements from API ───────────────────────────────── */
+        async function _loadAnnouncementList() {
+            const list = document.getElementById('ann-list');
+            if (!list) return;
+            list.innerHTML = '<p class="text-xs text-gray-400 px-4 py-3">Loading…</p>';
+            try {
+                const res  = await fetch('/api/overview/announcements');
+                const data = await res.json();
+                if (!data.success || !data.announcements || data.announcements.length === 0) {
+                    list.innerHTML = '<p class="text-xs text-gray-500 px-4 py-3 text-center">No announcements yet.</p>';
+                    return;
+                }
+                list.innerHTML = data.announcements.map(function(a) {
+                    return _annCard(a);
+                }).join('');
+                _annListDirty = false;
+            } catch(e) {
+                list.innerHTML = '<p class="text-xs text-red-400 px-4 py-3">Failed to load.</p>';
+            }
+        }
+
+        /* ── Prepend a single new announcement card ────────────────────── */
+        function _prependAnnouncement(ann) {
+            const list = document.getElementById('ann-list');
+            if (!list) return;
+            // Remove "no announcements" placeholder if present
+            const placeholder = list.querySelector('p');
+            if (placeholder) placeholder.remove();
+            const div = document.createElement('div');
+            div.innerHTML = _annCard(ann);
+            list.insertBefore(div.firstChild, list.firstChild);
+        }
+
+        /* ── Build HTML card for one announcement — clickable ─────────── */
+        function _annCard(a) {
+            const dateStr = a.date ? new Date(a.date).toLocaleDateString('en-IN', {
+                day: 'numeric', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            }) : '';
+            const titleEsc   = _esc(a.title);
+            const msgEsc     = _esc(a.message);
+            const attachHtml = a.attachmentUrl
+                ? '<a href="' + a.attachmentUrl + '" target="_blank" class="mt-2 inline-flex items-center gap-1 text-primary-600 hover:underline text-xs" data-rs-click="hrDashboard-36"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>View Attachment</a>'
+                : '';
+            const dataAttach = a.attachmentUrl ? ' data-attach="' + _esc(a.attachmentUrl) + '"' : '';
+            return '<div class="px-4 py-3 hover:bg-blue-100 transition-colors cursor-pointer" ' +
+                       'data-rs-click="hrDashboard-37" ' +
+                       'data-title="' + titleEsc + '" ' +
+                       'data-msg="' + msgEsc + '" ' +
+                       'data-date="' + dateStr + '"' + dataAttach + '>' +
+                       '<p class="text-xs font-bold text-gray-800 leading-snug">' + titleEsc + '</p>' +
+                       '<p class="text-xs text-gray-500 mt-0.5 leading-snug line-clamp-2">' + msgEsc + '</p>' +
+                       attachHtml +
+                       '<p class="text-xs text-gray-400 mt-1">' + dateStr + '</p>' +
+                   '</div>';
+        }
+
+        window.openAnnModal = function(el) {
+            const title  = el.getAttribute('data-title')  || '';
+            const msg    = el.getAttribute('data-msg')    || '';
+            const date   = el.getAttribute('data-date')   || '';
+            const attach = el.getAttribute('data-attach') || '';
+            document.getElementById('ann-modal-title').textContent = title;
+            document.getElementById('ann-modal-msg').textContent   = msg;
+            document.getElementById('ann-modal-date').textContent  = date;
+            const attachEl = document.getElementById('ann-modal-attach');
+            if (attach) { attachEl.href = attach; attachEl.classList.remove('hidden'); }
+            else { attachEl.classList.add('hidden'); }
+            document.getElementById('ann-modal').classList.remove('hidden');
+        };
+
+        window.closeAnnModal = function() {
+            document.getElementById('ann-modal').classList.add('hidden');
+        };
+
+        /* ── Mark all announcements as seen (resets badge) ─────────────── */
+        window.markAllAnnouncementsSeen = async function() {
+            try {
+                await fetch('/api/overview/announcements/mark-seen', { method: 'POST' });
+                _setBadge(0);
+            } catch(e) {}
+        };
+
+        /* ── Set badge count ───────────────────────────────────────────── */
+        function _setBadge(n) {
+            const badge = document.getElementById('ann-badge');
+            if (!badge) return;
+            if (n > 0) {
+                badge.textContent = n > 99 ? '99+' : n;
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
+                badge.textContent = '0';
+            }
+        }
+
+        /* ── HTML-escape helper ────────────────────────────────────────── */
+        function _esc(s) {
+            return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        /* ── Poll unread count on page load (fallback if socket fails) ─── */
+        async function _pollUnreadCount() {
+            try {
+                const res  = await fetch('/api/overview/announcements/unread-count');
+                const data = await res.json();
+                if (data.success) _setBadge(data.count);
+            } catch(e) {}
+        }
+
+        /* ── Init ──────────────────────────────────────────────────────── */
+        document.addEventListener('DOMContentLoaded', function() {
+            _pollUnreadCount();
+        });
+
+    })();
+    </script>
+    <!-- ══ END ANNOUNCEMENT SYSTEM JS ══════════════════════════════════════ -->
+
+<!-- Announcement Detail Modal -->
+<div id="ann-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 bg-indigo-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/></svg>
+                </div>
+                <h3 class="text-base font-bold text-gray-900">Announcement</h3>
+            </div>
+            <button data-rs-click="hrDashboard-38" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6">
+            <h2 id="ann-modal-title" class="text-xl font-bold text-gray-900 mb-3"></h2>
+            <p id="ann-modal-msg" class="text-gray-600 text-sm leading-relaxed mb-4 whitespace-pre-wrap"></p>
+            <a id="ann-modal-attach" href="#" target="_blank"
+               class="hidden inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-sm font-medium hover:bg-indigo-100 transition mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+                View Attachment
+            </a>
+            <p id="ann-modal-date" class="text-xs text-gray-400"></p>
+        </div>
+    </div>
+</div>
+<%- include('partials/site-tools') %>
+<div id="rs-dashboard-experience" data-login-token="<%= typeof welcome !== 'undefined' ? welcome.token : '' %>" data-name="<%= typeof welcome !== 'undefined' ? welcome.name : '' %>"></div>
+</body>
+</html>

@@ -1,0 +1,56 @@
+/* RoleSphere shared dashboard design system, scoped to the four role dashboards. */
+:root { --rs-ink:#17243d; --rs-muted:#64748b; --rs-accent:#4f46e5; --rs-line:#e7ebf3; --rs-bg:#f5f7fb; }
+body.rs-dashboard { font-family:Inter,ui-sans-serif,system-ui,sans-serif; background:var(--rs-bg)!important; color:var(--rs-ink); letter-spacing:-.01em; }
+.rs-dashboard aside { width:264px; flex-shrink:0; background:#fff; border-right:1px solid var(--rs-line); box-shadow:3px 0 24px rgba(20,35,65,.025); }
+.rs-dashboard aside nav { padding-top:20px; }
+.rs-dashboard aside nav a, .rs-dashboard aside nav button.nav-item { border-radius:11px; margin:3px 10px; width:calc(100% - 20px); padding:11px 14px; font-size:13px; font-weight:550; transition:background .18s,color .18s,transform .18s; }
+.rs-dashboard aside nav a:hover, .rs-dashboard aside nav button.nav-item:hover { background:#eef2ff; color:#4338ca; }
+.rs-dashboard aside nav a.bg-blue-50,.rs-dashboard aside nav a.bg-primary-50,.rs-dashboard aside nav button.nav-item.bg-blue-50 { background:#e9edff; color:#4338ca; }
+.rs-dashboard main { min-width:0; background:linear-gradient(165deg,#f5f7ff 0%,#f7f9fc 45%,#f8fafc 100%); }
+.rs-dashboard main > header { background:rgba(255,255,255,.94); border-bottom:1px solid var(--rs-line); min-height:74px; box-shadow:0 1px 2px rgba(15,23,42,.025); }
+.rs-dashboard main > header h1, .rs-dashboard main > header h2 { letter-spacing:-.035em; font-weight:750; }
+.rs-dashboard main > div, .rs-dashboard main > section { min-width:0; }
+.rs-dashboard .bg-white.rounded-xl, .rs-dashboard .bg-white.rounded-2xl, .rs-dashboard .bg-white.rounded-lg { border:1px solid var(--rs-line)!important; border-radius:18px!important; box-shadow:0 3px 14px rgba(32,45,80,.035)!important; }
+.rs-dashboard .shadow-sm { box-shadow:0 3px 13px rgba(20,35,65,.045); }
+.rs-dashboard button.bg-primary-600, .rs-dashboard a.bg-primary-600, .rs-dashboard button.bg-blue-600, .rs-dashboard a.bg-blue-600 { background:#4f46e5!important; border-radius:10px; font-weight:600; box-shadow:0 4px 12px rgba(79,70,229,.15); }
+.rs-dashboard button.bg-primary-600:hover, .rs-dashboard a.bg-primary-600:hover, .rs-dashboard button.bg-blue-600:hover { background:#4338ca!important; }
+.rs-dashboard input:not([type=checkbox]):not([type=radio]), .rs-dashboard select, .rs-dashboard textarea { border:1px solid #dce2ee; border-radius:10px; min-height:39px; background:#fff; }
+.rs-dashboard input:focus, .rs-dashboard select:focus, .rs-dashboard textarea:focus { outline:2px solid rgba(99,102,241,.22); outline-offset:1px; border-color:#818cf8; }
+/* Fix legacy dynamically generated table rows that do not carry Tailwind utility classes. */
+.rs-dashboard .overflow-x-auto { max-width:100%; }
+.rs-dashboard table { width:100%; min-width:540px; border-collapse:separate; border-spacing:0; text-align:left; font-size:13px; }
+.rs-dashboard table thead { background:#f8faff!important; }
+.rs-dashboard table th { padding:14px 20px!important; color:#697991!important; font-size:11px!important; font-weight:750!important; text-transform:uppercase; letter-spacing:.075em; white-space:nowrap; border-bottom:1px solid #e8edf5; }
+.rs-dashboard table td { padding:15px 20px!important; line-height:1.5; color:#334155; border-bottom:1px solid #eef1f6; vertical-align:middle; overflow-wrap:anywhere; }
+.rs-dashboard table td:first-child { color:#16223c; font-weight:600; }
+.rs-dashboard table tbody tr:last-child td { border-bottom:0; }
+.rs-dashboard table tbody tr { transition:background-color .15s ease; }
+.rs-dashboard table tbody tr:hover { background:#f8faff; }
+.rs-dashboard table td a { color:#4f46e5; font-weight:650; text-decoration:none; }
+.rs-dashboard table td a:hover { text-decoration:underline; }
+.rs-dashboard table td button { border-radius:8px; }
+.rs-dashboard .section-content { min-width:0; }
+.rs-dashboard .rounded-full { flex-shrink:0; }
+.rs-dashboard .text-gray-400 { color:#8190a6; }
+.rs-dashboard dialog { border-radius:18px; border:1px solid var(--rs-line); padding:24px; box-shadow:0 24px 80px rgba(15,23,42,.2); }
+@media (max-width:767px) { .rs-dashboard aside { width:264px; } .rs-dashboard main { width:100%; } .rs-dashboard main > header { padding:12px 18px; } .rs-dashboard table { min-width:560px; } .rs-dashboard table th, .rs-dashboard table td { padding:12px 14px!important; } }
+@media (prefers-reduced-motion:reduce) { .rs-dashboard * { scroll-behavior:auto!important; transition-duration:0s!important; animation-duration:0s!important; } }
+
+/* Employee / manager directory parity — explicit table layout overrides legacy CSS. */
+.rs-dashboard table.rs-directory-table{width:100%!important;min-width:650px!important;table-layout:fixed!important;border-collapse:collapse!important;border-spacing:0!important;display:table!important}
+.rs-dashboard table.rs-directory-table thead{display:table-header-group!important}
+.rs-dashboard table.rs-directory-table tbody{display:table-row-group!important}
+.rs-dashboard table.rs-directory-table tr{display:table-row!important}
+.rs-dashboard table.rs-directory-table th,.rs-dashboard table.rs-directory-table td{display:table-cell!important;box-sizing:border-box!important;vertical-align:middle!important;padding:18px 24px!important;border-bottom:1px solid rgba(148,163,184,.15)!important;text-align:left!important;white-space:normal!important;overflow-wrap:anywhere!important}
+.rs-dashboard table.rs-directory-table th{padding-top:15px!important;padding-bottom:15px!important;font-size:11px!important;letter-spacing:.1em!important;text-transform:uppercase!important;font-weight:700!important;color:#a6a4b4!important}
+.rs-dashboard table.rs-directory-table td{font-size:14px!important;line-height:1.6!important;color:inherit!important}
+.rs-dashboard table.rs-directory-table td:first-child{font-weight:600!important}
+.rs-dashboard table.rs-directory-table th:last-child,.rs-dashboard table.rs-directory-table td:last-child{text-align:right!important}
+.rs-dashboard table.rs-directory-table th:first-child,.rs-dashboard table.rs-directory-table td:first-child{width:28%!important}
+.rs-dashboard table.rs-directory-table th:nth-child(2),.rs-dashboard table.rs-directory-table td:nth-child(2){width:45%!important}
+.rs-dashboard table.rs-directory-table th:last-child,.rs-dashboard table.rs-directory-table td:last-child{width:27%!important}
+.rs-dashboard table.rs-directory-table.rs-directory-two th:first-child,.rs-dashboard table.rs-directory-table.rs-directory-two td:first-child{width:36%!important}
+.rs-dashboard table.rs-directory-table.rs-directory-two th:last-child,.rs-dashboard table.rs-directory-table.rs-directory-two td:last-child{width:64%!important;text-align:left!important}
+.rs-dashboard table.rs-directory-table td button,.rs-dashboard table.rs-directory-table td a{display:inline-flex!important;align-items:center;justify-content:center;padding:8px 12px!important;margin:2px 4px!important;border:1px solid rgba(148,163,184,.22)!important;border-radius:999px!important;font-size:12px!important;font-weight:600!important;white-space:nowrap!important}
+.rs-dashboard table.rs-directory-table tbody tr:hover{background:rgba(123,112,190,.07)!important}
+@media(max-width:720px){.rs-dashboard table.rs-directory-table{min-width:650px!important}}

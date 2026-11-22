@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><%- include('partials/premium-head') %>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login methods · Profile security | RoleSphere</title>
+<link rel="stylesheet" href="/css/workbench.css"><link rel="stylesheet" href="/css/login-methods.css">
+<script src="/js/login-methods.js" defer></script></head>
+<body class="login-methods-page"><main class="login-settings-shell">
+<a class="settings-back" href="/workbench?tab=profile&security=1">← My profile and security</a>
+<p class="settings-eyebrow">ROLESPHERE / PROFILE SETTINGS</p>
+<h1>Login &amp; security.</h1>
+<p class="settings-intro">Manage how you access your workspace. Connecting Google never changes your assigned role or administrator approval.</p>
+<section class="login-settings-card" aria-labelledby="settings-title">
+<div class="settings-heading"><div><p class="settings-eyebrow">CONNECTED METHODS</p><h2 id="settings-title">Your sign-in options</h2></div><span class="settings-role"><%= user.role %></span></div>
+<div id="login-methods-feedback" role="status" aria-live="polite"></div>
+<div id="login-methods-loading">Loading your login methods…</div>
+<div id="login-methods-controls" hidden>
+<div class="settings-method"><div><strong>Email and password</strong><small>Uses your RoleSphere account password</small></div><span id="password-status"></span></div>
+<div class="settings-method"><div><strong>Google</strong><small id="google-status">Connect your matching Google account</small></div><a id="connect-google" class="settings-action" href="/api/auth/google/start?intent=link">Connect Google</a><span id="google-connected" hidden>Connected</span></div>
+<fieldset class="settings-fieldset"><legend>Preferred login method</legend><label><input type="radio" name="loginMethod" value="password"> Email and password</label><label><input type="radio" name="loginMethod" value="google"> Google</label><small>Both connected login methods remain available regardless of your preference.</small></fieldset>
+<form id="disconnect-google-form" hidden><label for="disconnect-google-password">Disconnect Google — confirm your RoleSphere password</label><input id="disconnect-google-password" type="password" autocomplete="current-password" maxlength="128" required placeholder="Current password"><button type="submit" class="settings-action settings-danger">Disconnect Google</button></form>
+</div>
+</section>
+<p class="settings-footnote">Your RoleSphere email is <strong><%= user.email %></strong>. To connect Google, you must use that same verified Google email address.</p>
+</main><%- include('partials/site-tools') %></body></html>

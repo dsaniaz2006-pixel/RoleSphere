@@ -1,0 +1,24 @@
+font-0.ttf
+Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
+Geist
+https://openfontlicense.org
+
+font-1.ttf
+Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
+Geist Medium
+https://openfontlicense.org
+
+font-2.ttf
+Copyright 2024 The Geist Project Authors (https://github.com/vercel/geist-font)
+Geist SemiBold
+https://openfontlicense.org
+
+font-3.ttf
+Copyright 2022 The Instrument Serif Project Authors (https://github.com/Instrument/instrument-serif)
+Instrument Serif
+https://scripts.sil.org/OFL
+
+font-4.ttf
+Copyright 2022 The Instrument Serif Project Authors (https://github.com/Instrument/instrument-serif)
+Instrument Serif
+https://scripts.sil.org/OFL

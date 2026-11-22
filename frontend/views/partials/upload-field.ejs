@@ -1,0 +1,5 @@
+<div class="rs-upload" data-upload-field>
+  <input type="file" id="<%= inputId %>" name="<%= inputName %>" accept="<%= accept || '*' %>" <%= required ? 'required' : '' %> data-max-bytes="<%= inputName === 'profilePhoto' ? 2097152 : 10485760 %>" class="rs-file-input" aria-label="<%= label %>" <%- typeof changeHandler !== 'undefined' && changeHandler ? 'data-rs-change="' + changeHandler + '"' : '' %>>
+  <div class="rs-upload-host" data-input-id="<%= inputId %>" data-upload-label="<%= label %>"></div>
+  <noscript><label for="<%= inputId %>"><%= label %></label></noscript>
+</div>

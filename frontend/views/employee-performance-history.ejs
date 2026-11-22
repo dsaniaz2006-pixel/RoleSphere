@@ -1,0 +1,34 @@
+<%- include('partials/header') || '' %>
+
+<h2>My Performance Reviews</h2>
+
+<div id="reviews-list" style="margin-top: 20px;"></div>
+
+<script>
+  fetch(`/api/performance/employee/<%= employee.id || employee._id %>`)
+    .then(res => res.json())
+    .then(data => {
+      const container = document.getElementById('reviews-list');
+      if (data.success && data.reviews.length > 0) {
+        let html = '';
+        data.reviews.forEach(r => {
+          html += `
+            <div style="border:1px solid #ccc; padding:15px; margin-bottom:15px; border-radius:8px;">
+              <strong>Period:</strong> ${escapeHtml(r.period)} | <strong>Rating:</strong> ${escapeHtml(r.rating)}/5<br>
+              <strong>By:</strong> ${escapeHtml(r.reviewerName)}<br>
+              <p>${escapeHtml(r.comments)}</p>
+              ${r.strengths ? `<p><strong>Strengths:</strong> ${escapeHtml(r.strengths)}</p>` : ''}
+              ${r.improvements ? `<p><strong>Improvements:</strong> ${escapeHtml(r.improvements)}</p>` : ''}
+            </div>`;
+        });
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<p>No performance reviews found yet.</p>';
+      }
+    })
+    .catch(() => {
+      document.getElementById('reviews-list').innerHTML = '<p>Error loading reviews.</p>';
+    });
+</script>
+
+<%- include('partials/footer') || '' %>

@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Login</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #34000b;
+        }
+        input, button {
+            width: 90%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+<%- include('partials/premium-assets') %>
+</head>
+<body>
+<header class="rs-page-brand"><%- include('partials/brand') %></header>
+    <div class="container">
+        <h1>Manager Login</h1>
+        <form action="/manager/login" method="POST">
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <a href="/manager/register">Register</a>
+    </div>
+<%- include('partials/site-tools') %>
+</body>
+</html>

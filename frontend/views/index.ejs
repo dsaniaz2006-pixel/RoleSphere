@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head>
+<%- include('partials/premium-head') %>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#111110"><meta name="description" content="Your people, tasks and everyday work, connected in RoleSphere."><title>RoleSphere — Work that flows together.</title>
+<link rel="preload" as="image" href="/images/landing/sculpture-dark.webp" media="(min-width:640px)"><link rel="stylesheet" href="/fonts/landing/fonts.css"><link rel="stylesheet" href="/css/landing.css"><script src="/js/landing.js" defer></script><%- include('partials/premium-assets') %>
+</head>
+<body><a class="skip-link" href="#main">Skip to content</a><main id="main">
+<section class="sh-root" data-theme="dark" aria-labelledby="hero-title">
+<div class="sh-backdrop" aria-hidden="true">sphere</div>
+<div class="sh-stage" aria-hidden="true"><picture><source media="(max-width:639px)" srcset="/images/landing/sculpture-mobile-dark.webp"><img class="sh-fallback" src="/images/landing/sculpture-dark.webp" alt="" draggable="false" width="1983" height="793"></picture></div>
+<nav class="sh-nav" aria-label="Primary navigation"><a class="sh-brand" href="/"><span class="rs-brand-mark" aria-hidden="true">R<span>.</span></span><span class="rs-brand-name">RoleSphere<span class="rs-brand-period">.</span></span></a><ul class="sh-links"><li><a class="sh-link" href="#workspace">Workspace</a></li><li><a class="sh-link" href="/login/Admin">Admin</a></li><li><a class="sh-link" href="/login/HR">HR</a></li><li><a class="sh-link" href="/login">Sign in</a></li><li class="sh-keep"><button class="sh-theme" data-theme-toggle type="button" aria-label="Switch to light theme"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="3.2" stroke="currentColor" stroke-width="1.3"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1 1M12 12l1 1M3 13l1-1M12 4l1-1" stroke="currentColor" stroke-width="1.3"/></svg></button></li><li class="sh-keep"><a class="sh-navcta" href="/register">Get started</a></li></ul></nav>
+<div class="sh-hint" aria-hidden="true">Move across the form</div><div class="sh-spacer"></div>
+<div class="sh-content"><div><p class="sh-eyebrow">YOUR PEOPLE. YOUR WORK. CONNECTED.</p><h1 class="sh-h1" id="hero-title"><span class="sh-line">Work that</span><span class="sh-line sh-accent">flows together.</span></h1></div><div class="sh-aside"><p class="sh-body">Bring your people, tasks and everyday work into one connected workspace. Less friction. More room for your team to do great things.</p><div class="sh-ctas"><a class="sh-btn" href="/register">Get started <span aria-hidden="true">→</span></a><a class="sh-txt" href="/login">Sign in <span aria-hidden="true">→</span></a></div></div></div>
+<button class="sh-motion" type="button" data-motion-toggle aria-pressed="false" hidden><span data-motion-label>Pause animation</span></button><a class="sh-credit" href="https://guglielmogiannattasio.it" target="_blank" rel="noopener noreferrer">Sculpture by guglielmogiannattasio.it</a>
+</section>
+
+<section class="workspace-section" id="workspace" aria-labelledby="workspace-title">
+<div class="section-intro"><p class="eyebrow">01 / THE WORKSPACE</p><h2 id="workspace-title">Different roles.<br><em>Shared momentum.</em></h2><p>From the first check-in to the next big milestone, keep the everyday moving. One place for your people to see what matters and take the next step.</p></div>
+<div class="role-grid">
+<% const roles=[
+{name:'Admin',number:'01',description:'See the bigger picture.',detail:'Manage departments, people and approvals with organization-wide visibility.',icon:'◎',className:'admin'},
+{name:'HR',number:'02',description:'Put your people first.',detail:'Keep employee records, attendance and leave requests moving.',icon:'✳',className:'hr'},
+{name:'Manager',number:'03',description:'Move your team forward.',detail:'Assign tasks, review submissions and follow your team’s progress.',icon:'↗',className:'manager'},
+{name:'Employee',number:'04',description:'Make space for great work.',detail:'Track your attendance, manage tasks and stay connected to your team.',icon:'◒',className:'employee'}]; %>
+<% roles.forEach(role=>{ %><a class="role-card role-<%= role.className %>" href="/login/<%= role.name %>"><div class="role-card-top"><span><%= role.number %> / <%= role.name %></span><span class="role-arrow" aria-hidden="true">↗</span></div><span class="role-symbol" aria-hidden="true"><%= role.icon %></span><div><h3><%= role.description %></h3><p><%= role.detail %></p><span class="role-entry">Sign in as <%= role.name %> <span aria-hidden="true">→</span></span></div></a><% }); %>
+</div>
+<div class="capabilities" aria-label="Workspace features"><span>Attendance</span><span>Tasks &amp; reviews</span><span>Leave requests</span><span>People &amp; teams</span><span>Reports</span></div>
+</section>
+<section class="closing" aria-labelledby="closing-title"><p class="eyebrow">A LITTLE MORE CONNECTED. EVERY DAY.</p><h2 id="closing-title">Find your place<br>in the <em>sphere.</em></h2><a class="button button-dark" href="/register">Create your account <span aria-hidden="true">↗</span></a><p class="approval-note">HR, Manager and Employee accounts require approval.</p></section>
+</main>
+<footer class="site-footer"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true">r<span>•</span></span>RoleSphere</a><span>EVERY ROLE. ONE SPHERE.</span><a href="/login">Sign in <span aria-hidden="true">↗</span></a></footer>
+<%- include('partials/site-tools') %>
+</body></html>

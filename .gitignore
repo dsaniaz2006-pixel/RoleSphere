@@ -1,0 +1,91 @@
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+node_modules/
+yarn.lock
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# Build and Distribution
+dist/
+build/
+coverage/
+.next/
+out/
+
+# Runtime and Temporary
+.cache/
+tmp/
+temp/
+*.pid
+*.seed
+
+# Database
+*.sqlite
+*.db
+*.sqlite3
+
+# Upload directories
+uploads/*
+!uploads/.gitkeep
+!uploads/*/
+uploads/*/*
+!uploads/*/.gitkeep
+public/uploads/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Private local HTTPS certificates and .env backups (never commit these)
+certs/
+*.pem
+*.key
+*.p12
+.env.https-backup*
+.env.https-new
+
+# Local snapshots, secret exports, generated reports
+*.bak
+*.backup
+*.local
+*.zip
+
+# Additional local-only files
+.env.*
+!.env.example
+
+# Local certificates and private keys
+certs/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and temporary databases
+node_modules/
+tmp/
+
+# Local UI backups
+.rolesphere-ui-backup/
+*.backup-*
+APPLY-HR-DASHBOARD-REFRESH-V2.txt

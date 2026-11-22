@@ -1,0 +1,26 @@
+<%
+const presets = { Admin: ['ember','dark',11], HR: ['aurora','light',3], Manager: ['dusk','dark',7], Employee: ['glacier','light',5] };
+const recipe = presets[folderRole];
+const folderId = 'folder-' + folderRole;
+const backPath = 'M0 56A22 22 0 0 1 22 34L146 34C170 34 172 0 198 0L318 0A22 22 0 0 1 340 22L340 250A22 22 0 0 1 318 272L22 272A22 22 0 0 1 0 250Z';
+const frontPath = 'M0 22A22 22 0 0 1 22 0L118 0C144 0 146 32 172 32L318 32A22 22 0 0 1 340 54L340 176A22 22 0 0 1 318 198L22 198A22 22 0 0 1 0 176Z';
+const files = folderRole === 'Admin' ? [{ name:'Sign in', meta:'ADMIN ACCESS', href:'/login/Admin' }] : [{ name:'Sign in', meta:'WELCOME BACK', href:'/login/' + folderRole }, { name:'Create account', meta:'JOIN YOUR TEAM', href:'/register/' + folderRole }];
+%>
+<div class="gf-root" id="<%= folderId %>" data-tone="<%= recipe[1] %>" data-place="bottom-left" data-art="<%= recipe[0] %>" data-seed="<%= recipe[2] %>">
+ <div class="gf-stage"><div class="gf-tilt">
+  <div class="gf-shadow" aria-hidden="true"></div>
+  <div class="gf-back" style="clip-path:path('<%= backPath %>')" aria-hidden="true"><canvas class="gf-art" width="364" height="296"></canvas><div class="gf-back-sheen"></div></div>
+  <svg class="gf-rim gf-back-rim" viewBox="0 0 340 272" aria-hidden="true"><path d="<%= backPath %>"/></svg>
+  <div class="gf-front" style="clip-path:path('<%= frontPath %>')">
+   <div class="gf-tint" aria-hidden="true"></div><div class="gf-spec" aria-hidden="true"></div>
+   <svg class="gf-rim gf-front-rim" viewBox="0 0 340 198" aria-hidden="true"><path d="<%= frontPath %>" stroke="rgba(255,255,255,.65)"/></svg>
+   <button type="button" class="gf-hit" aria-expanded="false" aria-label="Open <%= folderRole %> folder" aria-controls="<%= folderId %>-files"></button>
+   <div class="gf-label"><span class="gf-title"><%= folderRole %></span><span class="gf-meta"><%= folderRole === 'Admin' ? 'Organization access' : 'Your space to work' %></span></div>
+  </div>
+  <div class="gf-files" id="<%= folderId %>-files" role="list" aria-label="<%= folderRole %> access options">
+   <% files.forEach((file,i) => { %><div class="gf-sheet-slot" role="listitem"><a class="gf-sheet" href="<%= file.href %>" tabindex="-1" style="--gf-slot:<%= files.length === 1 ? 0 : i === 0 ? -1 : 1 %>;--gf-depth:<%= files.length - 1 - i %>;--gf-jx:<%= i === 0 ? '-3px' : '3px' %>;--gf-jr:<%= i === 0 ? '-1deg' : '1deg' %>;z-index:<%= i + 1 %>">
+    <span class="gf-lines" aria-hidden="true"><i style="width:86%"></i><i style="width:92%"></i><i style="width:64%"></i><i style="width:88%"></i></span><span class="gf-sheet-head"><span class="gf-sheet-name"><%= file.name %></span><span class="gf-sheet-meta"><%= file.meta %></span></span>
+   </a></div><% }) %>
+  </div>
+ </div></div>
+</div>

@@ -1,0 +1,31 @@
+<%- include('partials/header') || '' %>
+
+<h2>Give Performance Review</h2>
+
+<form action="/manager/performance-review" method="POST">
+  <label>Select Employee:</label><br>
+  <select name="employeeId" required style="width: 300px; padding: 8px;">
+    <% employees.forEach(emp => { %>
+      <option value="<%= emp._id %>"><%= emp.name %> - <%= emp.email %></option>
+    <% }); %>
+  </select><br><br>
+
+  <label>Review Period (e.g. 2025-Q2):</label><br>
+  <input type="text" name="period" placeholder="2025-Q2" required><br><br>
+
+  <label>Rating (1-5):</label><br>
+  <input type="number" name="rating" min="1" max="5" required><br><br>
+
+  <label>Comments:</label><br>
+  <textarea name="comments" rows="6" cols="50" required></textarea><br><br>
+
+  <label>Strengths:</label><br>
+  <textarea name="strengths" rows="3" cols="50"></textarea><br><br>
+
+  <label>Areas of Improvement:</label><br>
+  <textarea name="improvements" rows="3" cols="50"></textarea><br><br>
+
+  <button type="submit" style="padding: 10px 20px;">Submit Review</button>
+</form>
+
+<%- include('partials/footer') || '' %>

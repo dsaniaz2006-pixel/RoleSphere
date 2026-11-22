@@ -1,0 +1,42 @@
+<%
+const resetMode = recoveryMode === 'reset';
+const done = recoveryMode === 'done';
+const activeToken = typeof token !== 'undefined' ? token : null;
+const errorText = typeof error !== 'undefined' ? error : null;
+const successText = typeof success !== 'undefined' ? success : null;
+const loginRole = typeof role !== 'undefined' && ['Admin','HR','Manager','Employee'].includes(role) ? role : null;
+const loginPath = loginRole ? '/login/' + loginRole : '/login';
+%>
+<!DOCTYPE html><html lang="en"><head>
+<%- include('premium-head') %><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f4f2ee">
+<title><%= done ? 'Password updated' : resetMode ? 'Reset your password' : 'Forgot your password' %> | RoleSphere</title>
+<link rel="stylesheet" href="/css/glass-folder.css"><link rel="stylesheet" href="/css/auth.css"><link rel="stylesheet" href="/css/recovery.css">
+<script defer src="/js/auth-art.js"></script><script defer src="/js/recovery.js"></script><%- include('premium-assets') %>
+</head><body class="auth-body" data-recovery-mode="<%= recoveryMode %>"><div class="auth-ambient" aria-hidden="true"></div>
+<header class="auth-header"><%- include('brand') %><a class="header-link" href="<%= loginPath %>">Back to sign in <span aria-hidden="true">↗</span></a></header>
+<main id="main-content" class="auth-main auth-split auth-recovery">
+<section class="auth-story" aria-label="Account recovery"><a class="back-link" href="/login"><span aria-hidden="true">←</span> All roles</a><p class="auth-eyebrow"><span class="status-dot"></span> BACK TO YOUR SPHERE</p>
+<h1>A fresh start.<br><span class="serif-word">Same workspace.</span></h1><p class="auth-description">Your people, projects and progress are right where you left them. Let’s get you back in.</p>
+<div class="recovery-folder" aria-hidden="true"><div class="recovery-folder-back"></div><div class="recovery-sheet"><span class="recovery-sheet-icon">✳</span><span>YOUR WORKSPACE</span><i></i><i></i><i></i></div><div class="recovery-folder-front"><span class="rs-brand-mark">R<span>.</span></span><span>Account access<br><strong>RoleSphere</strong></span></div></div>
+<div class="story-footnote"><span class="tiny-spark" aria-hidden="true">✳</span><p>A little peace of mind.<br><strong>A little more connected.</strong></p></div>
+</section>
+<section class="auth-form-card" aria-labelledby="recovery-heading"><div class="form-topline"><span class="role-badge"><span class="status-dot"></span>ACCOUNT ACCESS</span><span class="form-index"><%= done ? '04 / READY' : resetMode ? '03 / RESET' : '02 / RECOVER' %></span></div>
+<h2 id="recovery-heading"><%= done ? 'You’re all set.' : resetMode ? activeToken ? 'A new beginning.' : 'Let’s try that again.' : 'Forgot your password?' %></h2>
+<p class="form-description"><%= done ? 'Your password has been updated. Sign in to return to your workspace.' : resetMode ? 'Choose a new password to keep your workspace yours.' : 'Enter your work email. We’ll send you a secure reset link.' %></p>
+<% if (errorText) { %><div class="auth-error" role="alert"><%= errorText %></div><% } %>
+<% if (successText) { %><div class="recovery-success" role="status"><span aria-hidden="true">✓</span><p><%= successText %></p><small>Check your inbox and spam folder. Reset links expire after one hour.</small></div><% } %>
+<% if (done) { %><div class="recovery-success"><span aria-hidden="true">✓</span><p>Password updated.</p></div><a class="auth-submit" href="<%= loginPath %>"><span>Sign in<%= loginRole ? ' as ' + loginRole : '' %></span><span aria-hidden="true">↗</span></a>
+<% } else if (resetMode && !activeToken) { %><a class="auth-submit" href="/forgot-password"><span>Request a new link</span><span aria-hidden="true">↗</span></a>
+<% } else if (!successText) { %>
+<form id="recovery-form" method="post" action="<%= resetMode ? '/reset-password/' + activeToken : '/forgot-password' %>" autocomplete="on">
+<% if (!resetMode) { %><div class="field"><label for="email">Work email</label><input id="email" name="email" type="email" autocomplete="username" placeholder="you@company.com" maxlength="254" required></div>
+<% } else { %>
+<% [{id:'password',name:'password',label:'New password',placeholder:'At least 8 characters'},{id:'confirmPassword',name:'confirmPassword',label:'Confirm new password',placeholder:'One more time'}].forEach(field => { %>
+<div class="field"><label for="<%= field.id %>"><%= field.label %></label><div class="password-field"><input type="password" id="<%= field.id %>" name="<%= field.name %>" autocomplete="new-password" placeholder="<%= field.placeholder %>" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-toggle="<%= field.id %>" aria-controls="<%= field.id %>" aria-label="Show <%= field.label.toLowerCase() %>" aria-pressed="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+<% }) %><p class="field-help">Use 8–128 characters. Your browser can save your updated password.</p>
+<% } %>
+<button type="submit" class="auth-submit"><span><%= resetMode ? 'Save new password' : 'Send reset link' %></span><span class="submit-arrow" aria-hidden="true">↗</span></button>
+</form><% } %>
+<div class="form-divider"><span>YOUR WORK, TOGETHER</span></div><p class="form-switch">Remembered it? <a href="<%= loginPath %>">Back to sign in ↗</a></p></section>
+</main><footer class="auth-footer"><span>© <%= new Date().getFullYear() %> RoleSphere</span><span class="footer-note"><span class="status-dot"></span> Thoughtfully connected.</span><a href="/">Back to home ↗</a></footer><%- include('site-tools') %>
+</body></html>

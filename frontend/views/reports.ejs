@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Export Reports | RoleSphere</title>
+  <link rel="stylesheet" href="/css/app.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<%- include('partials/premium-assets') %>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+<header class="rs-page-brand"><%- include('partials/brand') %></header>
+
+  <!-- Header -->
+  <div class="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <span class="text-gray-600 font-medium">Export Reports</span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-sm text-gray-500"><%= user.name %> &middot; <%= user.role %></span>
+      <a href="<%= user.role === 'Admin' ? '/api/admin/dashboard' : '/hr/dashboard' %>"
+         class="text-sm text-indigo-600 hover:underline">&larr; Back to Dashboard</a>
+    </div>
+  </div>
+
+  <div class="max-w-6xl mx-auto px-6 py-10">
+    <h1 class="text-2xl font-bold text-gray-900 mb-1">Export Reports</h1>
+    <p class="text-gray-500 mb-8">
+      Attendance, leave, tasks, performance and review data as Excel or PDF.
+      Leave a month blank to export all time.
+    </p>
+
+    <!-- Toast -->
+    <div id="toast" class="hidden fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg font-medium text-sm max-w-sm">
+      <span id="toastMsg"></span>
+    </div>
+
+    <div id="cards" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+  </div>
+
+  <script>
+  // ── Report definitions ──────────────────────────────────────────────────────
+  // Each entry renders one card. `fields` become query params on the request.
+  const FORMAT_FIELD = {
+    name: "format", label: "Format", type: "select",
+    options: [["excel", "Excel (.xlsx)"], ["pdf", "PDF (.pdf)"]]
+  };
+  const MONTH_FIELD = { name: "month", label: "Month (optional)", type: "month" };
+
+  const REPORTS = [
+    {
+      id: "attendance", title: "Attendance", accent: "blue",
+      desc: "Daily check-in / check-out records",
+      note: "Includes late flags and a present / absent / holiday summary row.",
+      fields: [
+        MONTH_FIELD,
+        { name: "role", label: "User Type", type: "select",
+          options: [["Employee", "Employees"], ["HR", "HR staff"], ["Manager", "Managers"]] },
+        FORMAT_FIELD
+      ]
+    },
+    {
+      id: "leaves", title: "Leave Applications", accent: "orange",
+      desc: "All leave requests with approval status",
+      note: "Month filters on the leave start date.",
+      fields: [
+        MONTH_FIELD,
+        { name: "status", label: "Status", type: "select",
+          options: [["", "All statuses"], ["Pending", "Pending"], ["Approved", "Approved"], ["Rejected", "Rejected"]] },
+        FORMAT_FIELD
+      ]
+    },
+    {
+      id: "tasks", title: "Tasks", accent: "cyan",
+      desc: "Assigned work with deadlines and submissions",
+      note: "Month filters on the task deadline, not the creation date.",
+      fields: [
+        MONTH_FIELD,
+        { name: "status", label: "Status", type: "select",
+          options: [["", "All statuses"], ["Pending", "Pending"], ["Submitted", "Submitted"], ["Approved", "Approved"], ["Rejected", "Rejected"]] },
+        FORMAT_FIELD
+      ]
+    },
+    {
+      id: "performance", title: "Performance Scorecard", accent: "green",
+      desc: "Task completion rates per employee",
+      note: "Derived from task and work-report activity, sorted by completion rate. Includes each employee's average review rating.",
+      fields: [FORMAT_FIELD]
+    },
+    {
+      id: "reviews", title: "Performance Reviews", accent: "violet",
+      desc: "Manager-written reviews, ratings and goals",
+      note: "Period matches whatever the reviewer typed, e.g. 2025-Q2 or 2025-06.",
+      fields: [
+        { name: "period", label: "Period (optional)", type: "text", placeholder: "e.g. 2025-Q2" },
+        { name: "month", label: "Written in month (optional)", type: "month" },
+        FORMAT_FIELD
+      ]
+    },
+    {
+      id: "summary", title: "Full System Summary", accent: "purple",
+      desc: "One workbook, five sheets",
+      note: "Overview, Employees, Leaves, Tasks and Reviews in a single Excel file. Excel only.",
+      fields: [MONTH_FIELD]
+    }
+  ];
+  // ── Card rendering ──────────────────────────────────────────────────────────
+  const INPUT_CLS = "w-full border border-gray-200 rounded-lg px-3 py-2 text-sm " +
+                    "focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none";
+
+  function fieldHTML(f) {
+    const label = `<label class="block text-xs font-semibold text-gray-600 mb-1">${escapeHtml(f.label)}</label>`;
+    if (f.type === "select") {
+      const opts = f.options.map(([v, t]) => `<option value="${v}">${t}</option>`).join("");
+      return `<div>${label}<select data-param="${escapeHtml(f.name)}" class="${INPUT_CLS}">${opts}</select></div>`;
+    }
+    const ph = f.placeholder ? ` placeholder="${f.placeholder}"` : "";
+    return `<div>${label}<input type="${escapeHtml(f.type)}" data-param="${escapeHtml(f.name)}"${ph} class="${INPUT_CLS}"></div>`;
+  }
+
+  function cardHTML(r) {
+    return `
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-${escapeHtml(r.accent)}-100 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-${escapeHtml(r.accent)}-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="font-bold text-gray-900">${escapeHtml(r.title)}</h2>
+            <p class="text-xs text-gray-500">${escapeHtml(r.desc)}</p>
+          </div>
+        </div>
+        <div class="space-y-3 flex-1" data-form="${escapeHtml(r.id)}">
+          ${r.fields.map(fieldHTML).join("")}
+          <p class="text-xs text-gray-400 leading-relaxed">${escapeHtml(r.note)}</p>
+        </div>
+        <button data-report="${escapeHtml(r.id)}"
+                class="mt-4 w-full bg-${escapeHtml(r.accent)}-600 hover:bg-${escapeHtml(r.accent)}-700 disabled:opacity-50
+                       disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg
+                       transition flex items-center justify-center gap-2">
+          <span class="btn-label">Download ${escapeHtml(r.title)}</span>
+        </button>
+      </div>`;
+  }
+
+  document.getElementById("cards").innerHTML = REPORTS.map(cardHTML).join("");
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  let toastTimer;
+  function toast(msg, ok) {
+    const el = document.getElementById("toast");
+    document.getElementById("toastMsg").textContent = msg;
+    el.className = "fixed top-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg font-medium " +
+                   "text-sm max-w-sm text-white " + (ok ? "bg-green-600" : "bg-red-600");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.add("hidden"), ok ? 4000 : 8000);
+  }
+
+  // ── Download ────────────────────────────────────────────────────────────────
+  // The previous version used a hidden <a> click and always showed a green
+  // "Download started" toast. A 403 from an expired session, or a 500 from a
+  // failed query, either downloaded a file full of JSON or did nothing at all —
+  // and the user was told it worked. fetch lets us actually read the status.
+
+  function filenameFrom(disposition) {
+    const m = /filename="?([^";]+)"?/.exec(disposition || "");
+    return m ? m[1].trim() : null;
+  }
+
+  function saveBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  function setBusy(btn, busy) {
+    btn.disabled = busy;
+    const label = btn.querySelector(".btn-label");
+    if (busy) {
+      btn.dataset.original = label.textContent;
+      label.textContent = "Generating…";
+    } else if (btn.dataset.original) {
+      label.textContent = btn.dataset.original;
+    }
+  }
+
+  async function runReport(btn, id) {
+    const form   = document.querySelector(`[data-form="${id}"]`);
+    const params = new URLSearchParams();
+    form.querySelectorAll("[data-param]").forEach(el => {
+      if (el.value) params.set(el.dataset.param, el.value);
+    });
+
+    setBusy(btn, true);
+    try {
+      const res = await fetch(`/api/reports/${id}?${params.toString()}`, {
+        credentials: "same-origin",
+        headers: { "Accept": "application/json" }
+      });
+
+      if (!res.ok) {
+        let msg = `Request failed (HTTP ${res.status}).`;
+        try {
+          const body = await res.json();
+          if (body && body.error) msg = body.error;
+        } catch (_) { /* non-JSON body, keep the status message */ }
+        if (res.status === 401 || res.status === 403) {
+          msg += " Your session may have expired — try logging in again.";
+        }
+        return toast(msg, false);
+      }
+
+      const blob = await res.blob();
+      if (!blob.size) return toast("The server returned an empty file.", false);
+
+      const name = filenameFrom(res.headers.get("Content-Disposition")) || `${id}.xlsx`;
+      saveBlob(blob, name);
+      toast(`Downloaded ${name}`, true);
+    } catch (err) {
+      toast(`Could not reach the server: ${err.message}`, false);
+    } finally {
+      setBusy(btn, false);
+    }
+  }
+
+  document.getElementById("cards").addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-report]");
+    if (btn && !btn.disabled) runReport(btn, btn.dataset.report);
+  });
+  </script>
+
+<%- include('partials/site-tools') %>
+</body>
+</html>

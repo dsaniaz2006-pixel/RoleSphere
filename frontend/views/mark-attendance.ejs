@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta name="viewport" content="width=device-width,initial-scale=1">
+<%- include('partials/premium-head') %>
+<script src="/vendor/purify.min.js"></script><script src="/js/ui.js"></script>
+  <meta charset="UTF-8">
+  <title>Mark Attendance</title>
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    table {
+      width: 80%;
+      margin: 20px auto;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ccc;
+      text-align: left;
+    }
+    h1 {
+      text-align: center;
+    }
+    button {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+    }
+  </style>
+<%- include('partials/premium-assets') %>
+</head>
+<body>
+<header class="rs-page-brand"><%- include('partials/brand') %></header>
+  <h1>Mark Attendance</h1>
+  <form action="/api/admin/submit-attendance" method="POST">
+    <table>
+      <thead>
+        <tr>
+          <th>Employee Name</th>
+          <th>Attendance</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (employees && employees.length > 0) { %>
+          <% employees.forEach(employee => { %>
+            <tr>
+              <td><%= employee.name %></td>
+              <td>
+                <select name="attendance[<%= employee._id %>]">
+                  <option value="present">Present</option>
+                  <option value="absent">Absent</option>
+                </select>
+              </td>
+            </tr>
+          <% }); %>
+        <% } else { %>
+          <tr>
+            <td colspan="2">No employees found.</td>
+          </tr>
+        <% } %>
+      </tbody>
+    </table>
+    <button type="submit">Submit Attendance</button>
+  </form>
+<%- include('partials/site-tools') %>
+</body>
+</html>

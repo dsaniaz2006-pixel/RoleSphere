@@ -1,0 +1,7 @@
+import { Check, Plus } from 'lucide-react';
+export type Goal={text:string;done:boolean};
+export function ActivityCard({progress,goals,onToggle,onAdd,disabled=false}:{progress:number;goals:Goal[];onToggle:(index:number)=>void;onAdd:()=>void;disabled?:boolean}){
+ const completed=goals.filter(g=>g.done).length;
+ const metrics=[{label:'Overall progress',value:progress,display:`${progress}%`},{label:'Milestones',value:goals.length?completed/goals.length*100:0,display:`${completed}/${goals.length}`},{label:'Remaining',value:100-progress,display:`${100-progress}%`}];
+ return <div className="rs-activity"><div className="rs-rings">{metrics.map((m,i)=><div key={m.label}><div className={`rs-ring rs-ring-${i}`}><svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="42" className="track"/><circle cx="50" cy="50" r="42" strokeDasharray={`${m.value*2.639} 264`}/></svg><strong>{m.display}</strong></div><span>{m.label}</span></div>)}</div><div className="rs-panel-heading"><h3>Project milestones</h3><button className="rs-icon" type="button" aria-label="Add milestone" disabled={disabled||goals.length>=12} onClick={onAdd}><Plus size={18}/></button></div>{goals.length?goals.map((g,i)=><label className="rs-goal" key={i}><input type="checkbox" checked={g.done} onChange={()=>onToggle(i)} disabled={disabled}/><span className={g.done?'completed':''}>{g.text}</span>{g.done&&<Check size={16}/>}</label>):<p className="rs-muted">Add milestones to break this task into manageable steps.</p>}</div>;
+}

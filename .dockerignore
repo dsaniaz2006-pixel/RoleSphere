@@ -1,0 +1,14 @@
+node_modules
+.env
+.env.*
+!.env.example
+.git
+uploads/*
+coverage
+review
+output
+
+certs/
+*.pem
+*.key
+.env.https-backup*
