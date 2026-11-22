@@ -67,7 +67,7 @@ npm start
 | Manager | manager1@rolesphere.demo |
 | Employee | employee1@rolesphere.demo |
 
-Default demo password: `RoleSphereDemo!2026`. Set `DEMO_PASSWORD` before seeding to change it. These accounts are for a demonstration database. Administrators are created by seeding; public administrator registration is disabled.
+There is no shared default demo password. Set a unique DEMO_PASSWORD (at least 12 characters) in your local .env before running the seed script. Never publish the value or reuse a production password.
 
 The seed supplies 1 Admin, 2 HR, 3 managers, 20 employees in 4 departments, 60 days of attendance, 80 tasks across all four statuses, 60 leave records, 8 reviews and personal to-dos. Running it again preserves those counts.
 

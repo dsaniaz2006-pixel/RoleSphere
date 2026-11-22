@@ -162,7 +162,7 @@ function wrap(instance, field) {
   const mw = instance.single(field);
   return (req, res, next) => {
     mw(req, res, (err) => {
-      if (!err) { req._multipartParsed = true; return require('./validation').validateWrite(req, res, next); }
+      if (!err) { req._multipartParsed = true; return require('../validators/writeValidation').validateWrite(req, res, next); }
 
       if (err.name === "UploadRejected") {
         return res.status(422).json({ success: false, error: err.message });

@@ -1,0 +1,17 @@
+# Keep source files consistent across macOS, Windows, Linux and CI.
+* text=auto eol=lf
+
+# Binary assets must not be rewritten by Git's line-ending conversion.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.xlsx binary
+*.zip binary
