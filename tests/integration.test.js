@@ -244,6 +244,7 @@ describe('connected component workspace',()=>{
 test('demo seed creates requested dataset and reruns without duplicates', async () => {
   await mongoose.disconnect();
   process.env.MONGO_URI = mongo.getUri('rolesphere_demo');
+  process.env.DEMO_PASSWORD = 'IntegrationDemo!1234';
   const { seed } = require('../scripts/seed');
   const logs = jest.spyOn(console,'log').mockImplementation(() => {});
   await seed();

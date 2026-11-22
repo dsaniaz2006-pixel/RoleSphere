@@ -11,6 +11,14 @@ const locals = { hr:person,manager:person,employee:person,admin:person,employees
 const openPages=[];
 afterEach(()=>{for(const page of openPages.splice(0))page.window.close();});
 const settle = () => new Promise(r=>setTimeout(r,100));
+async function waitUntil(predicate, message) {
+ const deadline = Date.now() + 3000;
+ while (Date.now() < deadline) {
+  if (predicate()) return;
+  await new Promise(resolve => setTimeout(resolve, 20));
+ }
+ throw new Error(message || 'Timed out waiting for upload UI update');
+}
 function dom(html, reduced=true) {
  const page=new JSDOM(html,{url:'http://localhost',runScripts:'outside-only',pretendToBeVisual:true});const w=page.window;
  w.matchMedia=()=>({matches:reduced,addEventListener(){},removeEventListener(){},addListener(){},removeListener(){}});
@@ -45,13 +53,13 @@ test('every full template includes the global theme and controls',()=>{
  for(const file of fs.readdirSync(folder).filter(f=>f.endsWith('.ejs'))){const s=fs.readFileSync(path.join(folder,file),'utf8');if(!s.includes('<head>'))continue;expect(s).toContain("include('partials/premium-head')");expect(s).toContain("include('partials/site-tools')");}
 });
 test('empty-state uploads preserve native inputs, selection, removal and reset',async()=>{
- const p=dom(await render('employee-dashboard'));const w=p.window;w.eval(client());await settle();const input=w.document.querySelector('#taskFile'),zone=input.closest('.rs-upload');
+ const p=dom(await render('employee-dashboard'));const w=p.window;w.eval(client());await settle();const input=w.document.querySelector('#taskFile');await waitUntil(()=>input.dataset.rsUploadReady==='true','Task upload listener did not initialize');const zone=input.closest('.rs-upload');
  expect(input.required).toBe(true);expect(zone.textContent).toContain('Add your task submission');const click=jest.fn();input.click=click;
  zone.querySelector('button').click();expect(click).toHaveBeenCalledTimes(1);
- Object.defineProperty(input,'files',{configurable:true,value:[new w.File(['report'],'report.pdf',{type:'application/pdf'})]});input.dispatchEvent(new w.Event('change',{bubbles:true}));await settle();expect(zone.textContent).toContain('report.pdf');expect(zone.textContent).toContain('Ready to submit');
+ Object.defineProperty(input,'files',{configurable:true,value:[new w.File(['report'],'report.pdf',{type:'application/pdf'})]});input.dispatchEvent(new w.Event('change',{bubbles:true}));await waitUntil(()=>zone.textContent.includes('report.pdf'),'Selected task file was not rendered after change');expect(zone.textContent).toContain('Ready to submit');
  // Browser FileList clears when value is reset; supply an equivalent FileList fixture.
- Object.defineProperty(input,'files',{configurable:true,value:[]});zone.querySelector('[aria-label="Remove selected files"]').click();await settle();expect(zone.textContent).toContain('Add your task submission');
- const photo=w.document.querySelector('#photoInput');expect(photo.dataset.maxBytes).toBe('2097152');Object.defineProperty(photo,'files',{configurable:true,value:[new w.File(['photo'],'portrait.png',{type:'image/png'})]});photo.dispatchEvent(new w.Event('change',{bubbles:true}));await settle();expect(photo.closest('.rs-upload').textContent).toContain('portrait.png');Object.defineProperty(photo,'files',{configurable:true,value:[]});photo.form.reset();await settle();expect(photo.closest('.rs-upload').textContent).toContain('Add a profile photo');p.window.close();
+ Object.defineProperty(input,'files',{configurable:true,value:[]});zone.querySelector('[aria-label="Remove selected files"]').click();await waitUntil(()=>zone.textContent.includes('Add your task submission'),'Task file removal did not restore the empty state');
+ const photo=w.document.querySelector('#photoInput');expect(photo.dataset.maxBytes).toBe('2097152');await waitUntil(()=>photo.dataset.rsUploadReady==='true','Profile photo upload listener did not initialize');Object.defineProperty(photo,'files',{configurable:true,value:[new w.File(['photo'],'portrait.png',{type:'image/png'})]});photo.dispatchEvent(new w.Event('change',{bubbles:true}));await waitUntil(()=>photo.closest('.rs-upload').textContent.includes('portrait.png'),'Selected profile photo was not rendered after change');Object.defineProperty(photo,'files',{configurable:true,value:[]});photo.form.reset();await waitUntil(()=>photo.closest('.rs-upload').textContent.includes('Add a profile photo'),'Profile photo reset did not restore the empty state');p.window.close();
 });
 test('all existing upload points use empty states without changing field names',async()=>{
  const expected={'admin-announcements':['attachment'],'managerDashboard':['submissionFile'],'employee-dashboard':['attachment','profilePhoto','taskFile']};

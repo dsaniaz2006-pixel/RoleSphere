@@ -1,9 +1,9 @@
 # Frontend state management
 
-`frontend/src/state/api.ts` contains the shared API client and `useData<T>(path)` hook. Every request uses relative, same-origin `/api/` URLs, and the hook tracks loading/error/refresh via component state. A cleanup guard prevents late responses from updating an unmounted view.
+`frontend/src/services/apiClient.ts` owns same-origin API transport. It normalizes `/api/` URLs, handles JSON and empty responses, supports `AbortSignal`, and returns `ApiError` instances with HTTP status and stable error code. It redirects to `/login` on HTTP 401 as before.
 
-`frontend/src/workbench.tsx` keeps form and modal state locally using React `useState`. Login preference is persisted server-side. Local storage contains only a harmless UI preference hint, never an auth credential. Authentication state comes from the server session cookie.
+`frontend/src/state/api.ts` owns the React `useData<T>(path)` hook. It exposes `data`, `error`, `loading`, `setData`, and `reload`; it aborts an in-flight request when the path changes or the component unmounts. It re-exports `api`/`ApiError` to preserve existing imports in `workbench.tsx`.
 
-Prefer lifting state only when two sibling components actually share it. Avoid an extra Redux/Zustand dependency until cross-route data coordination is needed. As the application grows, split `workbench.tsx` by feature (`profile/`, `tasks/`, `attendance/`, `teams/`) with tests around each UI contract.
+Form, modal and tab state remains component-local in `frontend/src/workbench.tsx`. Lift state only when sibling components genuinely share it. Authentication state comes from the server session cookie, not local storage. Local storage may contain harmless display preferences only, never credentials or session tokens.
 
-If an API returns invalid JSON or rejects, the common client emits an actionable error rather than leaving the view permanently loading. Add new React API calls through `api()` rather than repeating fetch/JSON/error logic.
+Avoid Redux/Zustand until there is a demonstrated cross-route coordination requirement. As the workbench grows, extract one feature at a time into `frontend/src/features/` and cover each extraction with UI/API contract tests.

@@ -3,7 +3,7 @@ const { requireRole, requireSession } = require('./authMiddleware');
 
 /** Compatibility checks for legacy URL shapes. Protects role and record ownership. */
 function enforceRouteAccess(app) {
-  app.use(require('./validation').validateWrite);
+  app.use(require('../validators/writeValidation').validateWrite);
   // Canonical guards cover legacy handlers which previously trusted body emails.
   app.use('/employee', (req, res, next) => {
     if (req.path === '/register') return next();

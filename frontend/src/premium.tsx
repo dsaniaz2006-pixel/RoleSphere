@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { EmptyState, SelectedFiles } from '@/components/ui/empty-state';
 import { InteractiveHoverButton } from '@/components/ui/interactive-hover-button';
@@ -20,16 +20,23 @@ function UploadField({ input, label }: { input: HTMLInputElement; label: string 
   const [drag, setDrag] = useState(false);
   const zone = useRef<HTMLDivElement>(null);
   const describe = input.accept && input.accept !== '*' ? input.accept.replace(/,/g, ', ') : 'Documents and images';
-  useEffect(() => {
+  // Attach native input listeners before the upload UI becomes interactive.
+  useLayoutEffect(() => {
     const sync = () => { setFiles(Array.from(input.files || [])); setError(''); };
     const reset = () => { setTimeout(sync, 0); };
     input.addEventListener('change', sync); input.form?.addEventListener('reset', reset);
     const invalid = () => { setError('Choose a file before submitting.'); zone.current?.querySelector<HTMLButtonElement>('button')?.focus(); };
     input.addEventListener('invalid', invalid);
-    // Keep programmatic clearing by legacy upload handlers in sync as well.
+    input.dataset.rsUploadReady = 'true';
     let previous = input.value;
     const interval = window.setInterval(() => { if (input.value !== previous) { previous = input.value; sync(); } }, 500);
-    return () => { input.removeEventListener('change', sync); input.form?.removeEventListener('reset', reset); input.removeEventListener('invalid', invalid); clearInterval(interval); };
+    return () => {
+      delete input.dataset.rsUploadReady;
+      input.removeEventListener('change', sync);
+      input.form?.removeEventListener('reset', reset);
+      input.removeEventListener('invalid', invalid);
+      clearInterval(interval);
+    };
   }, [input]);
   const clear = () => { input.value = ''; input.dispatchEvent(new Event('change', { bubbles: true })); };
   const drop = (event: React.DragEvent) => {

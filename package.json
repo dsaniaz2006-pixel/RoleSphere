@@ -78,6 +78,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testTimeout": 120000
+    "testTimeout": 120000,
+    "roots": [
+      "<rootDir>/tests"
+    ]
   }
 }

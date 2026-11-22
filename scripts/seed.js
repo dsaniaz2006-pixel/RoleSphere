@@ -12,12 +12,21 @@ const Balance = require('../backend/models/LeaveBalance');
 const Review = require('../backend/models/PerformanceReview');
 const Todo = require('../backend/models/ToDo');
 const { ymd, workingDays } = require('../backend/utils/dates');
+const { isPlaceholder } = require('../backend/config/environment');
+
+function requireDemoPassword(env = process.env) {
+  const password = typeof env.DEMO_PASSWORD === 'string' ? env.DEMO_PASSWORD.trim() : '';
+  if (!password || password.length < 12 || isPlaceholder(password)) {
+    throw new Error('Set a unique DEMO_PASSWORD of at least 12 characters in your local .env before seeding.');
+  }
+  return password;
+}
 async function seed() {
   const uri = process.env.MONGO_URI;
   if (!uri || !/\/rolesphere_demo(?:[?]|$)/.test(uri)) throw new Error('Seed only accepts a database named rolesphere_demo. Set MONGO_URI accordingly.');
+  const password = requireDemoPassword();
   await mongoose.connect(uri);
   console.log('Connected. Creating demo accounts...');
-  const password = process.env.DEMO_PASSWORD || 'RoleSphereDemo!2026';
   const hashed = await bcrypt.hash(password, 12);
   async function person(Model, email, name, extra = {}) {
     return Model.findOneAndUpdate({ email }, { $set: { name, password: hashed, ...extra } }, { upsert:true,new:true,setDefaultsOnInsert:true });
@@ -49,7 +58,6 @@ async function seed() {
   await Todo.insertMany(employees.flatMap(e => ['Pending','In Progress','Done'].map(status => ({ employeeEmail:e.email,text:`Demo ${status.toLowerCase()} item`,status,completed:status==='Done' }))));
   console.log('Demo data ready: 1 Admin, 2 HR, 3 managers, 20 employees, 60 days attendance, 80 tasks, 60 leaves, 8 reviews.');
   console.log('Logins: admin@rolesphere.demo; hr1@rolesphere.demo; manager1@rolesphere.demo; employee1@rolesphere.demo');
-  console.log('Password:', password);
 }
 if (require.main === module) seed().catch(e => { console.error(e.message); process.exitCode=1; }).finally(() => mongoose.disconnect());
-module.exports = { seed };
+module.exports = { seed, requireDemoPassword };

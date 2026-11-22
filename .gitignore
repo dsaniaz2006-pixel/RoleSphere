@@ -89,3 +89,6 @@ tmp/
 .rolesphere-ui-backup/
 *.backup-*
 APPLY-HR-DASHBOARD-REFRESH-V2.txt
+
+# Local backups created by the RoleSphere architecture refactor installer
+.rolesphere-refactor-backup/
