@@ -1,37 +1,48 @@
 'use strict';
 
-// CORS does not prevent cross-site HTML form submissions. Require a matching
-// Origin for browser write requests, while retaining Origin-less API clients.
+// CORS does not prevent cross-site HTML form submissions. Validate browser
+// write requests against the configured public origin when available. This is
+// important for HTTPS deployments and TLS-terminating reverse proxies, where
+// the Express socket may see HTTP while the browser used HTTPS.
 function sameOriginWrites(req, res, next) {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
 
   const origin = req.get('Origin');
+  // Preserve compatibility for non-browser clients that do not send Origin.
   if (origin == null) return next();
 
-  const host = req.get('host');
   let suppliedOrigin;
   let expectedOrigin;
 
   try {
-    if (!host) throw new Error('Missing Host header');
-
     suppliedOrigin = new URL(origin);
-
-    // A direct Node HTTPS connection is authoritative even if proxy headers
-    // are present. For TLS-terminating deployments, req.protocol reflects
-    // X-Forwarded-Proto only when the configured proxy is trusted by Express.
-    const protocol = req.socket?.encrypted ? 'https' : req.protocol;
-    if (protocol !== 'http' && protocol !== 'https') {
-      throw new Error('Invalid request protocol');
+    if (!['http:', 'https:'].includes(suppliedOrigin.protocol) ||
+        suppliedOrigin.origin === 'null' ||
+        suppliedOrigin.username || suppliedOrigin.password) {
+      throw new Error('Invalid Origin header');
     }
 
-    expectedOrigin = new URL(`${protocol}://${host}`);
-  } catch (_) {
+    if (process.env.BASE_URL) {
+      // BASE_URL is the canonical externally visible origin. Do not derive
+      // this from req.protocol: that can describe the proxy-to-app hop.
+      const configuredUrl = new URL(process.env.BASE_URL);
+      if (!['http:', 'https:'].includes(configuredUrl.protocol) ||
+          configuredUrl.username || configuredUrl.password) {
+        throw new Error('Invalid BASE_URL');
+      }
+      expectedOrigin = configuredUrl.origin;
+    } else {
+      const host = req.get('host');
+      const protocol = req.socket?.encrypted ? 'https' : req.protocol;
+      if (!host || !['http', 'https'].includes(protocol)) {
+        throw new Error('Missing or invalid request origin information');
+      }
+      expectedOrigin = new URL(`${protocol}://${host}`).origin;
+    }
+  } catch (error) {
     console.warn('[sameOriginWrites] Rejected malformed or incomplete origin:', {
       origin,
-      host,
-      protocol: req.protocol,
-      directTls: Boolean(req.socket?.encrypted)
+      reason: error.message
     });
     return res.status(403).json({
       success: false,
@@ -39,13 +50,10 @@ function sameOriginWrites(req, res, next) {
     });
   }
 
-  if (suppliedOrigin.origin !== expectedOrigin.origin) {
+  if (suppliedOrigin.origin !== expectedOrigin) {
     console.warn('[sameOriginWrites] Rejected cross-origin write:', {
       origin: suppliedOrigin.origin,
-      expectedOrigin: expectedOrigin.origin,
-      host,
-      protocol: req.protocol,
-      directTls: Boolean(req.socket?.encrypted)
+      expectedOrigin
     });
     return res.status(403).json({
       success: false,
