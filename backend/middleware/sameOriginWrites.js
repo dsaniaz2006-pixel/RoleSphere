@@ -1,30 +1,20 @@
 'use strict';
 
 // CORS does not prevent cross-site HTML form submissions. Validate browser
-// write requests against the configured public origin when available. This is
-// important for HTTPS deployments and TLS-terminating reverse proxies, where
-// the Express socket may see HTTP while the browser used HTTPS.
+// writes against the canonical public origin. Some legitimate browser form
+// navigations serialize Origin as "null" (for example, opaque contexts or
+// privacy/referrer-policy cases); in that case use Fetch Metadata, then an
+// exact Referer-origin match as a compatibility fallback. Never allow null
+// solely because it is present.
 function sameOriginWrites(req, res, next) {
   if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) return next();
 
   const origin = req.get('Origin');
-  // Preserve compatibility for non-browser clients that do not send Origin.
-  if (origin == null) return next();
+  if (origin == null) return next(); // compatibility for non-browser API clients
 
-  let suppliedOrigin;
   let expectedOrigin;
-
   try {
-    suppliedOrigin = new URL(origin);
-    if (!['http:', 'https:'].includes(suppliedOrigin.protocol) ||
-        suppliedOrigin.origin === 'null' ||
-        suppliedOrigin.username || suppliedOrigin.password) {
-      throw new Error('Invalid Origin header');
-    }
-
     if (process.env.BASE_URL) {
-      // BASE_URL is the canonical externally visible origin. Do not derive
-      // this from req.protocol: that can describe the proxy-to-app hop.
       const configuredUrl = new URL(process.env.BASE_URL);
       if (!['http:', 'https:'].includes(configuredUrl.protocol) ||
           configuredUrl.username || configuredUrl.password) {
@@ -40,25 +30,53 @@ function sameOriginWrites(req, res, next) {
       expectedOrigin = new URL(`${protocol}://${host}`).origin;
     }
   } catch (error) {
-    console.warn('[sameOriginWrites] Rejected malformed or incomplete origin:', {
-      origin,
-      reason: error.message
+    console.warn('[sameOriginWrites] Rejected malformed request origin configuration:', {
+      origin, reason: error.message
     });
-    return res.status(403).json({
-      success: false,
-      error: 'Cross-origin write request rejected.'
+    return res.status(403).json({ success: false, error: 'Cross-origin write request rejected.' });
+  }
+
+  if (origin === 'null') {
+    // Fetch Metadata is browser-controlled (scripts cannot set Sec-* headers).
+    // Accept only an explicitly same-origin browser request.
+    const fetchSite = req.get('Sec-Fetch-Site');
+    if (fetchSite === 'same-origin') return next();
+
+    // Compatibility fallback for clients/browsers without Fetch Metadata:
+    // require a Referer whose parsed origin exactly matches this application.
+    const referer = req.get('Referer');
+    try {
+      if (referer && new URL(referer).origin === expectedOrigin) return next();
+    } catch (_) { /* malformed Referer remains rejected */ }
+
+    console.warn('[sameOriginWrites] Rejected opaque-origin write:', {
+      fetchSite: fetchSite || null,
+      refererOrigin: (() => { try { return referer ? new URL(referer).origin : null; } catch (_) { return null; } })(),
+      expectedOrigin
     });
+    return res.status(403).json({ success: false, error: 'Cross-origin write request rejected.' });
+  }
+
+  let suppliedOrigin;
+  try {
+    suppliedOrigin = new URL(origin);
+    if (!['http:', 'https:'].includes(suppliedOrigin.protocol) ||
+        suppliedOrigin.origin === 'null' ||
+        suppliedOrigin.username || suppliedOrigin.password) {
+      throw new Error('Invalid Origin header');
+    }
+  } catch (error) {
+    console.warn('[sameOriginWrites] Rejected malformed Origin header:', {
+      origin, reason: error.message
+    });
+    return res.status(403).json({ success: false, error: 'Cross-origin write request rejected.' });
   }
 
   if (suppliedOrigin.origin !== expectedOrigin) {
     console.warn('[sameOriginWrites] Rejected cross-origin write:', {
-      origin: suppliedOrigin.origin,
-      expectedOrigin
+      origin: suppliedOrigin.origin, expectedOrigin
     });
-    return res.status(403).json({
-      success: false,
-      error: 'Cross-origin write request rejected.'
-    });
+    return res.status(403).json({ success: false, error: 'Cross-origin write request rejected.' });
   }
 
   return next();
