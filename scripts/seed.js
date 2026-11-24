@@ -4,6 +4,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { DEMO_KEY, installDemoIsolation } = require('../backend/middleware/demoIsolation');
+const { DEMO_PASSWORD: DEFAULT_DEMO_PASSWORD, DEMO_ACCOUNTS } = require('../backend/config/demoAccounts');
 
 // Install the same schema marker/query plugin as the live application before
 // importing any models. Seeding itself uses explicit demoKey filters.
@@ -27,7 +28,6 @@ const TaskPlan = require('../backend/models/TaskPlan');
 const TransferRequest = require('../backend/models/TransferRequest');
 const RemovalComplaint = require('../backend/models/RemovalComplaint');
 
-const DEFAULT_DEMO_PASSWORD = 'RoleSphereDemo@2026!';
 const SEED_CONFIRMATION = 'I_UNDERSTAND_DEMO_DATA_IN_EMPLOYEEMANAGE';
 const ACCOUNT_MODELS = [Admin, HR, Manager, Employee];
 
@@ -76,10 +76,10 @@ function futureDate(days) {
 
 async function assertNoDemoAccountCollisions() {
   const wanted = [
-    { Model: Admin, email: 'admin@rolesphere.demo' },
-    { Model: HR, email: 'hr1@rolesphere.demo' },
-    { Model: Manager, email: 'manager1@rolesphere.demo' },
-    { Model: Employee, email: 'employee1@rolesphere.demo' }
+    { Model: Admin, email: DEMO_ACCOUNTS.Admin.email },
+    { Model: HR, email: DEMO_ACCOUNTS.HR.email },
+    { Model: Manager, email: DEMO_ACCOUNTS.Manager.email },
+    { Model: Employee, email: DEMO_ACCOUNTS.Employee.email }
   ];
 
   for (const account of wanted) {
@@ -139,16 +139,16 @@ async function seedDemoData(password) {
   const passwordHash = await bcrypt.hash(password, 12);
   const approved = { isApproved: true, status: 'approved' };
 
-  const admin = await ensureDemoAccount(Admin, 'admin@rolesphere.demo', 'RoleSphere Demo Admin', {
+  const admin = await ensureDemoAccount(Admin, DEMO_ACCOUNTS.Admin.email, 'RoleSphere Demo Admin', {
     role: 'Admin'
   }, passwordHash);
-  const hr = await ensureDemoAccount(HR, 'hr1@rolesphere.demo', 'RoleSphere Demo HR', {
+  const hr = await ensureDemoAccount(HR, DEMO_ACCOUNTS.HR.email, 'RoleSphere Demo HR', {
     role: 'HR', ...approved
   }, passwordHash);
-  const manager = await ensureDemoAccount(Manager, 'manager1@rolesphere.demo', 'RoleSphere Demo Manager', {
+  const manager = await ensureDemoAccount(Manager, DEMO_ACCOUNTS.Manager.email, 'RoleSphere Demo Manager', {
     ...approved
   }, passwordHash);
-  const employee = await ensureDemoAccount(Employee, 'employee1@rolesphere.demo', 'RoleSphere Demo Employee', {
+  const employee = await ensureDemoAccount(Employee, DEMO_ACCOUNTS.Employee.email, 'RoleSphere Demo Employee', {
     ...approved, managerId: manager._id, department: 'Engineering'
   }, passwordHash);
 
