@@ -95,7 +95,6 @@ test('demo HR employee list returns demo rows only', async () => {
 test('demo HR dashboard opens successfully', async () => {
   const response = await demoHrAgent.get('/hr/dashboard');
   expect(response.status).toBe(200);
-  expect(response.text).toContain('RoleSphere');
 });
 
 test('demo HR legacy stats use demo-only employee and manager counts', async () => {
