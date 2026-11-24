@@ -58,6 +58,7 @@ test('HR Managers directory preserves distinct Name and Email columns with scope
  expect(table).toBeTruthy();
  expect([...table.tHead.rows[0].cells].map(cell=>cell.textContent.trim())).toEqual(['Name','Email']);
  expect(table.querySelector('#managersList')).toBeTruthy();
+ expect(d.querySelector('link[href="/css/hr-dashboard-refinements.css?v=hr-managers-layout-4"]')).toBeTruthy();
  const styles=fs.readFileSync(path.join(root,'frontend/public/css/hr-dashboard-refinements.css'),'utf8');
  expect(styles).toContain('#section-managers table#hr-managers-directory');
  expect(styles).toContain('display: table-cell !important');
