@@ -92,6 +92,12 @@ test('demo HR employee list returns demo rows only', async () => {
   expect(response.body.map(person => person.email)).toEqual(['employee1@rolesphere.demo']);
 });
 
+test('demo HR dashboard opens successfully', async () => {
+  const response = await demoHrAgent.get('/hr/dashboard');
+  expect(response.status).toBe(200);
+  expect(response.text).toContain('RoleSphere');
+});
+
 test('demo HR legacy stats use demo-only employee and manager counts', async () => {
   const response = await demoHrAgent.get('/hr/stats').set(accepted);
   expect(response.status).toBe(200);
