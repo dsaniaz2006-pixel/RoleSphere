@@ -2,19 +2,12 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
-      "source": "/:path*",
-      "destination": "https://rolesphere.onrender.com/:path*"
-    }
-  ],
-  "headers": [
+      "source": "/",
+      "destination": "https://rolesphere.onrender.com/"
+    },
     {
       "source": "/:path*",
-      "headers": [
-        {
-          "key": "x-vercel-enable-rewrite-caching",
-          "value": "0"
-        }
-      ]
+      "destination": "https://rolesphere.onrender.com/:path*"
     }
   ]
 }
