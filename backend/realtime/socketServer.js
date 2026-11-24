@@ -55,6 +55,13 @@ function setupSocket(httpServer, sessionMiddleware) {
       return;
     }
 
+    // Demo accounts are intentionally disconnected from live broadcasts. Their
+    // notification and announcement data is available through scoped HTTP reads.
+    if (sessionUser.isDemo === true || sessionUser.demoKey) {
+      socket.disconnect(true);
+      return;
+    }
+
     // Join the user's private room
     socket.join(userId);
 
