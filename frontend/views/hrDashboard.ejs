@@ -34,7 +34,7 @@
 <%- include('partials/premium-assets') %>
 <link rel="stylesheet" href="/css/finance-dashboard.css"><script defer src="/js/finance-dashboard.js"></script>
     <link rel="stylesheet" href="/css/rolesphere-redesign.css?v=directory-fix-2">
-    <link rel="stylesheet" href="/css/hr-dashboard-refinements.css?v=hr-managers-layout-4">
+    <link rel="stylesheet" href="/css/hr-dashboard-refinements.css?v=hr-managers-grid-5">
 </head>
 <body class="rs-dashboard rs-finance-dashboard rs-hr-dashboard rs-dot-dashboard bg-gray-50 h-screen flex overflow-hidden">
 <%- include('partials/finance-mobile') %>
@@ -321,16 +321,19 @@
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-4">
                         <h3 class="text-lg font-bold text-gray-900">Managers</h3>
                     </div>
-                    <div class="overflow-x-auto hr-managers-table-wrap">
-                        <table id="hr-managers-directory" class="w-full rs-directory-table rs-directory-two rs-hr-managers-table" aria-label="Managers directory">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                                </tr>
-                            </thead>
-                            <tbody id="managersList" class="divide-y divide-gray-100"></tbody>
-                        </table>
+                    <div class="hr-managers-directory-wrap">
+                        <div class="hr-managers-toolbar">
+                            <label for="hr-managers-search">Search managers</label>
+                            <input id="hr-managers-search" type="search" placeholder="Search by name or email..." autocomplete="off">
+                            <span id="hr-managers-count" role="status" aria-live="polite">Loading managers...</span>
+                        </div>
+                        <div id="hr-managers-directory" class="hr-managers-directory" role="table" aria-label="Managers directory">
+                            <div class="hr-managers-heading hr-manager-row" role="row">
+                                <div class="hr-manager-name" role="columnheader">Name</div>
+                                <div class="hr-manager-email" role="columnheader">Email</div>
+                            </div>
+                            <div id="managersList" class="hr-managers-rows" role="rowgroup" aria-live="polite"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -861,32 +864,82 @@ async function addEmployee(event) {
         }
 
         async function loadManagers() {
+            const list = document.getElementById('managersList');
+            const select = document.getElementById('managerSelect');
+            const search = document.getElementById('hr-managers-search');
+            const count = document.getElementById('hr-managers-count');
+
             try {
                 const res = await fetch('/hr/managers');
                 const data = await res.json();
-                const list = document.getElementById('managersList');
-                const select = document.getElementById('managerSelect');
-                if (list) list.innerHTML = '';
+                const managers = data.success && Array.isArray(data.managers) ? data.managers : [];
+
+                if (list) list.replaceChildren();
                 if (select) select.innerHTML = '<option value="" disabled selected>Select a manager</option>';
-                if (data.success && data.managers.length) {
-                    data.managers.forEach(m => {
-                        if (list) {
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td class="hr-manager-name px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(m.name)}</td>
-                                <td class="hr-manager-email px-6 py-4 text-sm text-gray-600">${escapeHtml(m.email)}</td>
-                            `;
-                            list.appendChild(tr);
-                        }
-                        if (select) {
-                            const opt = document.createElement('option');
-                            opt.value = m.name;
-                            opt.textContent = m.name;
-                            select.appendChild(opt);
-                        }
-                    });
+
+                managers.forEach(manager => {
+                    if (list) {
+                        const row = document.createElement('div');
+                        row.className = 'hr-manager-row';
+                        row.setAttribute('role', 'row');
+                        row.dataset.managerRow = 'true';
+
+                        const nameCell = document.createElement('div');
+                        nameCell.className = 'hr-manager-name';
+                        nameCell.setAttribute('role', 'cell');
+                        nameCell.textContent = manager.name || 'Unnamed manager';
+
+                        const emailCell = document.createElement('div');
+                        emailCell.className = 'hr-manager-email';
+                        emailCell.setAttribute('role', 'cell');
+                        emailCell.textContent = manager.email || 'No email available';
+
+                        row.append(nameCell, emailCell);
+                        list.appendChild(row);
+                    }
+
+                    if (select) {
+                        const option = document.createElement('option');
+                        option.value = manager.name || '';
+                        option.textContent = manager.name || 'Unnamed manager';
+                        select.appendChild(option);
+                    }
+                });
+
+                if (list && !managers.length) {
+                    const empty = document.createElement('div');
+                    empty.className = 'hr-managers-empty';
+                    empty.textContent = data.success ? 'No managers found.' : (data.error || 'Unable to load managers.');
+                    list.appendChild(empty);
                 }
-            } catch (e) { console.error('Failed to load managers', e); }
+
+                const filterManagers = () => {
+                    if (!list) return;
+                    const query = (search?.value || '').trim().toLowerCase();
+                    const rows = Array.from(list.querySelectorAll('[data-manager-row]'));
+                    let visible = 0;
+                    rows.forEach(row => {
+                        const matches = !query || row.textContent.toLowerCase().includes(query);
+                        row.hidden = !matches;
+                        if (matches) visible += 1;
+                    });
+                    if (count) {
+                        count.textContent = query
+                            ? `${visible} of ${rows.length} managers`
+                            : `${rows.length} managers`;
+                    }
+                };
+
+                if (search && search.dataset.bound !== 'true') {
+                    search.addEventListener('input', filterManagers);
+                    search.dataset.bound = 'true';
+                }
+                filterManagers();
+            } catch (error) {
+                console.error('Failed to load managers', error);
+                if (list) list.textContent = 'Unable to load managers. Please refresh and try again.';
+                if (count) count.textContent = 'Manager list unavailable';
+            }
         }
 
         async function loadAssignedTasks() {
