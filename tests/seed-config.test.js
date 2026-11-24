@@ -10,8 +10,7 @@ const {
 
 test('demo seed uses the documented public demo password unless explicitly overridden', () => {
   expect(requireDemoPassword({})).toBe(DEFAULT_DEMO_PASSWORD);
-  expect(requireDemoPassword({ DEMO_PASSWORD: 'PrivateDemoPassword!2026' })).toBe('PrivateDemoPassword!2026');
-  expect(() => requireDemoPassword({ DEMO_PASSWORD: 'short' })).toThrow(/between 12 and 128/);
+  expect(requireDemoPassword({ DEMO_PASSWORD: 'stale-value-from-an-old-env-file' })).toBe(DEFAULT_DEMO_PASSWORD);
 });
 
 test('database name parser accepts a MongoDB Atlas multi-host connection URI', () => {

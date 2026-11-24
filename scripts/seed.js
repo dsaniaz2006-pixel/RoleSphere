@@ -39,14 +39,11 @@ function getDatabaseName(uri) {
   return match ? decodeURIComponent(match[1]) : null;
 }
 
-function requireDemoPassword(env = process.env) {
-  const password = typeof env.DEMO_PASSWORD === 'string' && env.DEMO_PASSWORD.length
-    ? env.DEMO_PASSWORD
-    : DEFAULT_DEMO_PASSWORD;
-  if (password.length < 12 || password.length > 128) {
-    throw new Error('DEMO_PASSWORD must be between 12 and 128 characters.');
-  }
-  return password;
+function requireDemoPassword() {
+  // The shared credentials are intentionally fixed for public demo access.
+  // A stale DEMO_PASSWORD in an old .env must not seed a password that the
+  // deployed login page does not display.
+  return DEFAULT_DEMO_PASSWORD;
 }
 
 function validateSeedTarget(env = process.env) {

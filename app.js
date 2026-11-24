@@ -24,7 +24,7 @@ function createApp({ store } = {}) {
     res.locals.googleSignInEnabled = Boolean(require('./backend/services/googleIdentity').config());
     res.locals.demoEnabled = process.env.DEMO_MODE === 'true';
     res.locals.demoAccounts = DEMO_ACCOUNTS;
-    res.locals.demoPassword = process.env.DEMO_PASSWORD || DEMO_PASSWORD;
+    res.locals.demoPassword = DEMO_PASSWORD;
     next();
   });
   app.locals.jsonForScript = value => JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
