@@ -98,9 +98,9 @@ test('demo HR legacy stats use demo-only employee and manager counts', async () 
 });
 
 test('demo Mongoose find, count, and aggregate queries are scoped to demo records', async () => {
-  const findRows = await runWithDemoContext({ demoKey: DEMO_KEY }, () => Employee.find({}).select('email').lean());
-  const count = await runWithDemoContext({ demoKey: DEMO_KEY }, () => Employee.countDocuments({}));
-  const aggregate = await runWithDemoContext({ demoKey: DEMO_KEY }, () => Employee.aggregate([
+  const findRows = await runWithDemoContext({ demoKey: DEMO_KEY }, async () => await Employee.find({}).select('email').lean());
+  const count = await runWithDemoContext({ demoKey: DEMO_KEY }, async () => await Employee.countDocuments({}));
+  const aggregate = await runWithDemoContext({ demoKey: DEMO_KEY }, async () => await Employee.aggregate([
     { $group: { _id: null, count: { $sum: 1 } } }
   ]));
 
@@ -118,7 +118,7 @@ test('demo sessions cannot modify or delete real production records', async () =
   const create = await demoHrAgent.post('/hr/add-employee')
     .send({ name: 'Injected', email: 'injected@example.test', password: PASSWORD });
   expect(create.status).toBe(403);
-  expect(await Employee.exists({ email: 'injected@example.test' })).toBe(false);
+  expect(await Employee.findOne({ email: 'injected@example.test' })).toBeNull();
 
   const unchanged = await Employee.findById(realEmployee._id).lean();
   expect(unchanged.name).toBe('Real Employee - Must Stay Private');
@@ -144,8 +144,6 @@ test('demo credentials are shown on role login only when demo mode is enabled', 
   const hidden = await request(app).get('/login/HR');
   expect(hidden.status).toBe(200);
   expect(hidden.text).not.toContain('hr1@rolesphere.demo');
-  process.env.DEMO_MODE = 'true';
-
   const blocked = await demoHrAgent.get('/hr/employees').set(accepted);
   expect(blocked.status).toBe(403);
   expect(blocked.body.code).toBe('DEMO_MODE_DISABLED');
