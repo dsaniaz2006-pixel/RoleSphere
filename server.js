@@ -65,7 +65,7 @@ async function start() {
     console.error(`Unable to start RoleSphere on port ${port}: ${error.message}`);
     process.exitCode = 1;
   });
-  server.listen(port, () => console.log(`\n🌐 RoleSphere Website: ${httpsEnabled(process.env) ? 'https' : 'http'}://localhost:${port}\n`));
+  server.listen(port, "0.0.0.0", () => console.log(`\n🌐 RoleSphere Website: ${httpsEnabled(process.env) ? 'https' : 'http'}://localhost:${port}\n`));
   async function shutdown() {
     monthly?.stop(); io.close(); server.close();
     await app.get('sessionStore').close(); await mongoose.disconnect();
