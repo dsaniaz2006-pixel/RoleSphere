@@ -1,4 +1,3 @@
-
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const Admin = require("../models/Admin");
@@ -13,7 +12,8 @@ const WorkReport = require("../models/WorkReport");
 const moment = require("moment");
 const {
     sendLeaveStatusEmail,
-    sendAccountStatusEmail
+    sendAccountStatusEmail,
+    sendAccountRemovedEmail // ADDED
 } = require("../services/emailService");
 const { announcementUpload } = require("../middleware/uploadConfig");
 
@@ -269,10 +269,7 @@ router.get("/dashboard", async (req, res) => {
             rejected: reports.filter(r => r.status === "Rejected").length
         };
 
-        const pendingEmployees = await Employee.find({
-            isApproved: false
-        });
-
+        // MODIFIED: Removed pendingEmployees from dashboard count
         const pendingManagers = await Manager.find({
             isApproved: false
         });
@@ -282,7 +279,6 @@ router.get("/dashboard", async (req, res) => {
         });
 
         const pendingCount =
-            pendingEmployees.length +
             pendingManagers.length +
             pendingHRs.length;
 
@@ -353,10 +349,52 @@ router.get("/dashboard", async (req, res) => {
     }
 });
 
-// Delete employee
-router.post("/delete-employee/:id", async (req, res) => {
+// MODIFIED: Delete employee with admin guard and email notification
+router.post("/delete-employee/:id", adminOnly, async (req, res) => {
     try {
+        const employee = await Employee.findById(req.params.id);
+        
+        if (!employee) {
+            console.error("[RoleSphere] Employee removal failed: not found", {
+                employeeId: req.params.id
+            });
+            return res.redirect("/admin/dashboard");
+        }
+
+        // Capture details before deletion
+        const removedName = employee.name || employee.email;
+        const removedEmail = employee.email;
+
         await Employee.findByIdAndDelete(req.params.id);
+
+        if (removedEmail) {
+            try {
+                const info = await sendAccountRemovedEmail(
+                    removedEmail,
+                    removedName
+                );
+                console.log("[RoleSphere Email] Account removal email accepted:", {
+                    recipient: removedEmail,
+                    messageId: info.messageId,
+                    accepted: info.accepted,
+                    rejected: info.rejected
+                });
+                if (!info.accepted?.length) {
+                    console.warn(
+                        "[RoleSphere Email] SMTP returned no accepted recipients:",
+                        removedEmail
+                    );
+                }
+            } catch (emailError) {
+                // Email failure must never undo a successful deletion.
+                console.error("[RoleSphere Email] Account removal email failed:", {
+                    recipient: removedEmail,
+                    message: emailError.message,
+                    code: emailError.code
+                });
+            }
+        }
+
         res.redirect("/admin/dashboard");
     } catch (err) {
         console.error("Error deleting Employee:", err);
@@ -690,7 +728,7 @@ router.post("/submit-attendance", async (req, res) => {
     }
 });
 
-// Pending approvals page
+// MODIFIED: Pending approvals page (Removed Employees)
 router.get("/pending-approvals", async (req, res) => {
     try {
         if (
@@ -700,10 +738,6 @@ router.get("/pending-approvals", async (req, res) => {
         ) {
             return res.redirect("/login");
         }
-
-        const pendingEmployees = await Employee.find({
-            isApproved: false
-        }).select("name email _id");
 
         const pendingManagers = await Manager.find({
             isApproved: false
@@ -715,7 +749,6 @@ router.get("/pending-approvals", async (req, res) => {
 
         res.render("pending-approvals", {
             admin: req.session.admin || req.session.user,
-            pendingEmployees,
             pendingManagers,
             pendingHRs
         });

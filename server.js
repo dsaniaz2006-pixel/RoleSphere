@@ -9,6 +9,9 @@ const setupSocket = require('./backend/realtime/socketServer');
 const { resolveListeningPort } = require('./backend/config/runtimePorts');
 const { startMonthlyReports } = require('./backend/services/monthlyReports');
 const { assertServerEnvironment } = require('./backend/config/environment');
+// 1. ADDED IMPORT HERE
+const { backfillPendingEmployees } = require('./backend/services/employeeMigration');
+
 async function availablePort(preferred, attempts = 20) {
   for (let port = preferred; port < preferred + attempts; port++) {
     const free = await new Promise((resolve, reject) => {
@@ -24,6 +27,7 @@ async function availablePort(preferred, attempts = 20) {
   }
   throw new Error(`No available port found near ${preferred}`);
 }
+
 async function start() {
   const { port: preferredPort } = assertServerEnvironment(process.env);
   // Fail on incorrect HTTPS settings before opening the database or sockets.
@@ -48,7 +52,12 @@ async function start() {
     console.warn(`\n⚠ Google login unavailable: ${googleStatus.message}`);
     console.warn('  Run npm run doctor:google for a safe checklist (no secrets shown).\n');
   }
+  
   await mongoose.connect(process.env.MONGO_URI);
+  
+  // 2. ADDED BACKFILL CALL HERE (right after DB connection)
+  await backfillPendingEmployees(); 
+
   const app = createApp(); const server = tlsOptions ? createHttpsServer(tlsOptions, app) : createHttpServer(app);
   const io = setupSocket(server, app.get('sessionMiddleware')); app.set('io', io);
   const monthly = startMonthlyReports();

@@ -1,4 +1,3 @@
-
 "use strict";
 
 const nodemailer = require("nodemailer");
@@ -129,7 +128,9 @@ const sendEmail = async ({ to, subject, html, text, type }) => {
 
   try {
     const mailer = createTransporter();
-  if (!mailer) return { accepted: [], rejected: [], error: "Email configuration missing" };
+    if (!mailer) {
+      return { accepted: [], rejected: [], error: "Email configuration missing" };
+    }
 
     const info = await mailer.sendMail({
       from: getFromAddress(),
@@ -528,7 +529,7 @@ const sendTeamWelcomeEmail = async (
 };
 
 // ============================================================
-// 8. EMPLOYEE REMOVAL NOTICE EMAIL
+// 8. EMPLOYEE REMOVAL NOTICE EMAIL (TEAM REMOVAL)
 // ============================================================
 
 const sendRemovalNoticeEmail = async (
@@ -584,7 +585,49 @@ const sendRemovalNoticeEmail = async (
 };
 
 // ============================================================
-// 9. EXPORT ALL EMAIL FUNCTIONS
+// 9. PERMANENT ACCOUNT REMOVAL EMAIL (ADMIN DELETION)
+// ============================================================
+
+const sendAccountRemovedEmail = async (toEmail, employeeName) => {
+  const name = escapeHtml(employeeName || toEmail);
+
+  const html = wrapEmail(`
+    <tr>
+      <td style="padding:40px;">
+        <div style="background:#fef2f2;padding:12px 16px;
+          border-left:4px solid #ef4444;border-radius:8px;">
+          <p style="color:#991b1b;font-size:13px;font-weight:600;">
+            ACCOUNT REMOVAL NOTICE
+          </p>
+        </div>
+
+        <h1 style="color:#111827;font-size:24px;">
+          Hi ${name},
+        </h1>
+
+        <p style="color:#6b7280;font-size:15px;line-height:1.6;">
+          Your RoleSphere employee account has been permanently removed by an administrator.
+        </p>
+
+        <p style="color:#6b7280;font-size:14px;margin-top:24px;">
+          This means you can no longer sign in, access your dashboard, or receive new work through RoleSphere.
+          If you believe this was a mistake, please contact your HR team or organization administrator.
+        </p>
+      </td>
+    </tr>
+  `);
+
+  return sendEmail({
+    to: toEmail,
+    subject: `Your RoleSphere Account Has Been Removed`,
+    html,
+    text: `Hi ${employeeName || toEmail}, your RoleSphere employee account has been permanently removed by an administrator.`,
+    type: "Account removal email",
+  });
+};
+
+// ============================================================
+// 10. EXPORT ALL EMAIL FUNCTIONS
 // ============================================================
 
 module.exports = {
@@ -594,4 +637,5 @@ module.exports = {
   sendAccountStatusEmail,
   sendTeamWelcomeEmail,
   sendRemovalNoticeEmail,
+  sendAccountRemovedEmail,
 };

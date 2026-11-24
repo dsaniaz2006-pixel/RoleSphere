@@ -15,6 +15,7 @@ const models = { Admin, HR, Manager, Employee };
 const { establishSession } = require("../services/authSession");
 const getRoleModel = role => typeof role === 'string' && Object.prototype.hasOwnProperty.call(models, role) ? models[role] : null;
 const invalid = (res, role, error, status = 401) => res.status(status).render('role-login', { role, error });
+
 async function register(req, res, next) {
   try {
     const { name, email, password, role } = req.body;
@@ -22,10 +23,32 @@ async function register(req, res, next) {
     if (!Model || role === 'Admin') return res.status(403).json({ error: 'Public administrator registration is disabled. Use the seed script to create an administrator.' });
     if (typeof name !== 'string' || !name.trim() || typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || typeof password !== 'string' || password.length < 8 || password.length > 128) return res.status(400).json({ error: 'Valid name, email and password (8-128 characters) required' });
     if (await Model.exists({ email })) return res.status(409).json({ error: 'User already exists' });
-    await Model.create({ name, email, password: await bcrypt.hash(password, 12), isApproved: false, status: 'pending', role });
+
+    const isEmployee = role === 'Employee';
+
+    const user = await Model.create({
+      name,
+      email,
+      password: await bcrypt.hash(password, 12),
+      isApproved: isEmployee ? true : false,
+      status: isEmployee ? 'approved' : 'pending',
+      role
+    });
+
+    if (isEmployee) {
+      // Immediately authenticate and send to the Employee dashboard.
+      const destination = await establishSession(req, user, role, { method: 'password' });
+      return res.redirect(destination);
+    }
+
+    // HR and Manager remain pending for Admin approval.
     res.redirect('/register-pending');
-  } catch (err) { if (err.code === 11000) return res.status(409).json({ error: 'User already exists' }); next(err); }
+  } catch (err) {
+    if (err.code === 11000) return res.status(409).json({ error: 'User already exists' });
+    next(err);
+  }
 }
+
 async function login(req, res, next) {
   const { password, role } = req.body;
   const email = typeof req.body.email === 'string' ? req.body.email.trim() : '';
@@ -56,14 +79,18 @@ async function login(req, res, next) {
       }
       return invalid(res, role, matches.length > 1 ? 'These credentials match more than one role. Choose the role you want to use.' : 'Invalid credentials');
     }
-    if (role !== 'Admin' && (!user.isApproved || user.status !== 'approved')) {
+    
+    // MODIFIED: Allow Employees to log in immediately without approval. Keep restriction for HR and Manager.
+    if (role !== 'Admin' && role !== 'Employee' && (!user.isApproved || user.status !== 'approved')) {
       await audit(req, 'login.failure', {}, { attemptedEmail: email, attemptedRole: role, reason: 'not-approved' });
       return invalid(res, role, 'Your account is pending approval or has been rejected.', 403);
     }
+    
     const remember = req.body.rememberMe === true || req.body.rememberMe === 'on' || req.body.rememberMe === 'true';
     res.redirect(await establishSession(req, user, role, { remember, method: 'password' }));
   } catch (err) { next(err); }
 }
+
 router.post('/register', register);
 router.post('/login', login);
 router.login = login;
