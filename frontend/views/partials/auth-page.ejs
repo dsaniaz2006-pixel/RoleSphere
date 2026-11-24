@@ -72,4 +72,19 @@ if (errorText.startsWith('wrong_role:')) errorText = 'Please choose the correct 
  </section>
 <% } %>
 </main><footer class="auth-footer"><span>© <%= new Date().getFullYear() %> RoleSphere</span><span class="footer-note"><span class="status-dot"></span> Thoughtfully connected.</span><a href="/">Back to home <span aria-hidden="true">↗</span></a></footer><%- include('site-tools') %>
+<script>
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-demo-fill]');
+  if (!button) return;
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  if (!email || !password) return;
+  email.value = button.dataset.demoEmail || '';
+  password.value = button.dataset.demoPassword || '';
+  email.dispatchEvent(new Event('input', { bubbles: true }));
+  password.dispatchEvent(new Event('input', { bubbles: true }));
+  button.textContent = 'Demo credentials filled';
+  email.focus();
+});
+</script>
 </body></html>
