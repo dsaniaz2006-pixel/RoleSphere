@@ -280,7 +280,8 @@ router.post("/postAnnouncement", async (req, res) => {
 // Dashboard Stats
 router.get("/stats", async (req, res) => {
   try {
-    const employeeCount = await mongoose.connection.db.collection("Employees").countDocuments();
+    const employeeFilter = req.demoMode ? { demoKey: req.demoKey } : {};
+    const employeeCount = await mongoose.connection.db.collection("Employees").countDocuments(employeeFilter);
     const managerCount = await Manager.countDocuments();
     const pendingLeaves = await EmployeeLeave.countDocuments({ status: 'Pending' });
     const pendingManagerTasks = await Task.countDocuments({ assignedToModel: 'Manager', status: 'Pending' });
