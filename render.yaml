@@ -2,12 +2,13 @@ services:
   - type: web
     name: rolesphere
     runtime: node
+    region: singapore
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
     envVars:
       - key: NODE_VERSION
-        value: 24
+        value: 24.22.1
       - key: NODE_ENV
         value: production
       - key: COOKIE_SECURE
