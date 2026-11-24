@@ -73,6 +73,26 @@ function futureDate(days) {
   return dateOnly(date);
 }
 
+
+async function assertNoDemoAccountCollisions() {
+  const wanted = [
+    { Model: Admin, email: 'admin@rolesphere.demo' },
+    { Model: HR, email: 'hr1@rolesphere.demo' },
+    { Model: Manager, email: 'manager1@rolesphere.demo' },
+    { Model: Employee, email: 'employee1@rolesphere.demo' }
+  ];
+
+  for (const account of wanted) {
+    for (const Candidate of ACCOUNT_MODELS) {
+      const existing = await Candidate.findOne({ email: account.email }).select('_id demoKey').lean();
+      if (!existing) continue;
+      if (Candidate !== account.Model || existing.demoKey !== DEMO_KEY) {
+        throw new Error(`Refusing to reuse ${account.email}: an account with this email already exists outside the public demo. No records were changed.`);
+      }
+    }
+  }
+}
+
 async function ensureDemoAccount(Model, email, name, fields, passwordHash) {
   // Check all four role collections first. A pre-existing real account with a
   // demo email is a hard stop; never convert, reset, or overwrite it.
@@ -115,6 +135,7 @@ async function upsertDemoRecord(Model, demoSeedId, values) {
 }
 
 async function seedDemoData(password) {
+  await assertNoDemoAccountCollisions();
   const passwordHash = await bcrypt.hash(password, 12);
   const approved = { isApproved: true, status: 'approved' };
 
@@ -258,10 +279,10 @@ async function seedDemoData(password) {
     date: new Date()
   });
 
-  for (const person of [admin, hr, manager, employee]) {
+  for (const [person, role] of [[admin, 'Admin'], [hr, 'HR'], [manager, 'Manager'], [employee, 'Employee']]) {
     await upsertDemoRecord(Notification, `notification:welcome:${person._id}`, {
       recipientId: person._id,
-      recipientModel: person.role || (person.email === admin.email ? 'Admin' : 'Employee'),
+      recipientModel: role,
       type: 'system',
       title: 'Welcome to RoleSphere',
       message: 'This is sample notification data for the public demo.',
