@@ -9,7 +9,7 @@ const {
   DEFAULT_DEMO_PASSWORD
 } = require('../scripts/seed');
 const { DEMO_ACCOUNTS } = require('../backend/config/demoAccounts');
-const { DEMO_KEY } = require('../backend/middleware/demoIsolation');
+const { DEMO_KEY, runWithDemoContext } = require('../backend/middleware/demoIsolation');
 
 const Admin = require('../backend/models/Admin');
 const HR = require('../backend/models/HR');
@@ -84,26 +84,27 @@ test('seed is idempotent and leaves unrelated existing records untouched', async
   await seed(env);
 
   await mongoose.connect(uri);
-  const [admin, hr, manager, employee] = await Promise.all([
-    Admin.findOne({ email: DEMO_ACCOUNTS.Admin.email }).select('+password').lean(),
-    HR.findOne({ email: DEMO_ACCOUNTS.HR.email }).select('+password').lean(),
-    Manager.findOne({ email: DEMO_ACCOUNTS.Manager.email }).select('+password').lean(),
-    Employee.findOne({ email: DEMO_ACCOUNTS.Employee.email }).select('+password').lean()
-  ]);
-
-  expect([admin, hr, manager, employee].every(Boolean)).toBe(true);
-  expect([admin, hr, manager, employee].every(user => user.demoKey === DEMO_KEY && user.isDemo === true)).toBe(true);
-  for (const user of [admin, hr, manager, employee]) {
+  const demoSnapshot = await runWithDemoContext({ demoKey: DEMO_KEY }, async () => {
+    const [admin, hr, manager, employee] = await Promise.all([
+      Admin.findOne({ email: DEMO_ACCOUNTS.Admin.email }).select('+password').lean(),
+      HR.findOne({ email: DEMO_ACCOUNTS.HR.email }).select('+password').lean(),
+      Manager.findOne({ email: DEMO_ACCOUNTS.Manager.email }).select('+password').lean(),
+      Employee.findOne({ email: DEMO_ACCOUNTS.Employee.email }).select('+password').lean()
+    ]);
+    const counts = await Promise.all([
+      Admin.countDocuments({}), HR.countDocuments({}), Manager.countDocuments({}),
+      Employee.countDocuments({}), Attendance.countDocuments({}), Task.countDocuments({}),
+      Leave.countDocuments({})
+    ]);
+    return { users: [admin, hr, manager, employee], counts };
+  });
+  const { users, counts } = demoSnapshot;
+  expect(users.every(Boolean)).toBe(true);
+  expect(users.every(user => user.demoKey === DEMO_KEY && user.isDemo === true)).toBe(true);
+  for (const user of users) {
     expect(await bcrypt.compare(DEFAULT_DEMO_PASSWORD, user.password)).toBe(true);
   }
-
-  expect(await Admin.countDocuments({ demoKey: DEMO_KEY })).toBe(1);
-  expect(await HR.countDocuments({ demoKey: DEMO_KEY })).toBe(1);
-  expect(await Manager.countDocuments({ demoKey: DEMO_KEY })).toBe(1);
-  expect(await Employee.countDocuments({ demoKey: DEMO_KEY })).toBe(1);
-  expect(await Attendance.countDocuments({ demoKey: DEMO_KEY })).toBe(42);
-  expect(await Task.countDocuments({ demoKey: DEMO_KEY })).toBe(2);
-  expect(await Leave.countDocuments({ demoKey: DEMO_KEY })).toBe(3);
+  expect(counts).toEqual([1, 1, 1, 1, 42, 2, 3]);
 
   const unchanged = await Employee.findById(originalRealId).lean();
   expect(unchanged.name).toBe('Production employee preserved');
