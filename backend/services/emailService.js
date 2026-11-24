@@ -16,9 +16,8 @@ const createTransporter = () => {
   const emailPass = process.env.EMAIL_PASS;
 
   if (!emailUser || !emailPass) {
-    throw new Error(
-      "Email configuration is incomplete. EMAIL_USER and EMAIL_PASS are required."
-    );
+    console.warn("[RoleSphere Email] Config missing: EMAIL_USER and EMAIL_PASS required.");
+    return null;
   }
 
   if (process.env.EMAIL_SERVICE) {
@@ -130,6 +129,7 @@ const sendEmail = async ({ to, subject, html, text, type }) => {
 
   try {
     const mailer = createTransporter();
+  if (!mailer) return { accepted: [], rejected: [], error: "Email configuration missing" };
 
     const info = await mailer.sendMail({
       from: getFromAddress(),
