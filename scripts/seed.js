@@ -3,7 +3,7 @@
 require('dotenv').config();
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
-const { DEMO_KEY, installDemoIsolation } = require('../backend/middleware/demoIsolation');
+const { DEMO_KEY, installDemoIsolation, runWithSystemContext } = require('../backend/middleware/demoIsolation');
 const { DEMO_PASSWORD: DEFAULT_DEMO_PASSWORD, DEMO_ACCOUNTS } = require('../backend/config/demoAccounts');
 
 // Install the same schema marker/query plugin as the live application before
@@ -327,7 +327,7 @@ async function seed(env = process.env) {
 
   await mongoose.connect(env.MONGO_URI);
   try {
-    const summary = await seedDemoData(password);
+    const summary = await runWithSystemContext(() => seedDemoData(password));
     console.log('Public RoleSphere demo data is ready.');
     console.log('Accounts: 1 Admin, 1 HR, 1 Manager, 1 Employee.');
     console.log('Sample records: attendance, tasks, leave requests, leave balance, review, todos, work report, team, announcement, notifications and approval workflows.');
