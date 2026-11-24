@@ -34,13 +34,14 @@
 <%- include('partials/premium-assets') %>
 <link rel="stylesheet" href="/css/finance-dashboard.css"><script defer src="/js/finance-dashboard.js"></script>
     <link rel="stylesheet" href="/css/rolesphere-redesign.css?v=directory-fix-2">
+    <link rel="stylesheet" href="/css/hr-dashboard-refinements.css?v=hr-table-fix-3">
 </head>
-<body class="rs-dashboard rs-finance-dashboard rs-dot-dashboard bg-gray-50 h-screen flex overflow-hidden">
+<body class="rs-dashboard rs-finance-dashboard rs-hr-dashboard rs-dot-dashboard bg-gray-50 h-screen flex overflow-hidden">
 <%- include('partials/finance-mobile') %>
     <!-- Sidebar -->
-    <aside id="rs-role-sidebar" class="w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex">
+    <aside id="rs-role-sidebar" class="rs-hr-sidebar w-64 bg-white border-r border-gray-200 flex flex-col hidden md:flex" aria-label="HR workspace sidebar">
         <div class="rs-sidebar-brand"><%- include('partials/brand') %></div>
-        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
+        <nav class="rs-hr-nav flex-1 overflow-y-auto py-4 space-y-1" aria-label="HR workspace navigation">
         <!-- ══ ANNOUNCEMENT BELL — pinned top of sidebar ══════════════════ -->
         <!-- IMPORTANT: This sits OUTSIDE <nav> so it never scrolls away     -->
         <div class="relative border-b border-gray-100">
@@ -48,7 +49,7 @@
                 id="ann-toggle-btn"
                 data-rs-click="hrDashboard-0"
                 class="w-full flex items-center justify-between px-4 py-3 hover:bg-blue-50 transition-all group"
-                title="Announcements"
+                title="Announcement notifications" aria-label="Open announcement notifications" aria-expanded="false" aria-controls="ann-panel"
             >
                 <div class="flex items-center gap-3">
                     <!-- Megaphone icon -->
@@ -63,7 +64,7 @@
                             class="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full min-w-[18px] h-[18px] flex items-center justify-center px-1 hidden"
                         >0</span>
                     </div>
-                    <span class="text-sm font-semibold text-gray-700 group-hover:text-primary-600">Announcements</span>
+                    <span class="text-sm font-semibold text-gray-700 group-hover:text-primary-600">Updates</span>
                 </div>
                 <!-- Chevron that rotates when panel opens -->
                 <svg id="ann-chevron" class="w-4 h-4 text-gray-400 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,10 +90,12 @@
         </div>
         <!-- ══ END ANNOUNCEMENT BELL ════════════════════════════════════════ -->
 
+            <p class="rs-hr-nav-label">WORKSPACE</p>
             <button data-rs-click="hrDashboard-2" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="dashboard">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                 Dashboard
             </button>
+            <p class="rs-hr-nav-label">WORK MANAGEMENT</p>
             <button data-rs-click="hrDashboard-3" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="leave">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10a2 2 0 002 2h4a2 2 0 002-2V11M9 11h6"></path></svg>
                 Apply Leave
@@ -109,10 +112,7 @@
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M5 10h14M5 14h14M5 18h14"></path></svg>
                 Managers
             </button>
-            <button data-rs-click="hrDashboard-7" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="announcements">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"></path></svg>
-                Announcements
-            </button>
+            <p class="rs-hr-nav-label">PEOPLE &amp; ATTENDANCE</p>
             <!-- MY ATTENDANCE (check-in/out + monthly record) -->
             <button data-rs-click="hrDashboard-8" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="attendance">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
@@ -124,13 +124,12 @@
                 Team Attendance
             </button>
             <!-- COMPLAINTS -->
+            <p class="rs-hr-nav-label">OPERATIONS</p>
             <button data-rs-click="hrDashboard-10" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none" data-section="complaints">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                 Removal Complaints
             </button>
-        <div class="px-6 pt-4 pb-1">
-                <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Management</p>
-            </div>
+            <p class="rs-hr-nav-label">MANAGEMENT</p>
             <button data-rs-click="hrDashboard-11" data-section="transfer" class="nav-item w-full flex items-center gap-3 px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-primary-600 transition-all border-r-4 border-transparent focus:outline-none">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7l4-4m0 0l4 4m-4-4v18M16 17l4 4m0 0l-4 4m4-4H3"></path></svg>
                 <span class="text-sm font-medium">Transfer Requests</span>
@@ -140,17 +139,19 @@
                 <span class="text-sm font-medium">Performance Reviews</span>
             </button>
         </nav>
-        <div class="p-4 border-t border-gray-100">
+        <div class="rs-sidebar-actions p-4 border-t border-gray-100">
             <a href="/hr/reports" class="flex items-center gap-3 px-4 py-3 text-gray-600 rounded-xl hover:bg-gray-100 transition-all font-medium">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
                 Export Reports
             </a>
-            <a href="/hr/logout" class="flex items-center gap-3 px-4 py-3 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition-all font-medium">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Logout
-            </a>
         </div>
-    <a class="rs-workbench-nav" href="/workbench">Profile, calendar & teams <span aria-hidden="true">↗</span></a><div class="finance-sidebar-footer"><span class="finance-sidebar-status"></span><span>Connected workspace<small>Your people. Your sphere.</small></span></div></aside>
+        <a class="rs-workbench-nav" href="/workbench">Profile, calendar &amp; teams <span aria-hidden="true">↗</span></a>
+        <div class="finance-sidebar-footer"><span class="finance-sidebar-status"></span><span>Connected workspace<small>Your people. Your sphere.</small></span></div>
+        <a class="rs-sidebar-logout" href="/hr/logout">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            Logout
+        </a>
+    </aside>
 
     <!-- Main Content -->
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
@@ -163,6 +164,7 @@
                 <h2 id="pageTitle" class="text-xl font-bold text-gray-800">HR Dashboard</h2>
             </div>
             <div class="flex items-center gap-4">
+                <a class="rs-workbench-link rs-workbench-link--header" href="/workbench">My workspace <span aria-hidden="true">↗</span></a>
                  <div class="text-right hidden sm:block">
                     <div class="text-sm font-bold text-gray-800"><%= hr.name || 'HR Admin' %></div>
                     <div class="text-xs text-gray-500"><%= hr.email || 'Human Resources' %></div>
@@ -226,15 +228,21 @@
                         </div>
                     </div>
                     <div class="overflow-x-auto">
-                        <table class="w-full rs-directory-table">
+                        <table class="w-full hr-employee-directory" aria-label="Employee directory">
+                            <colgroup>
+                                <col class="hr-employee-col-name">
+                                <col class="hr-employee-col-email">
+                                <col class="hr-employee-col-actions">
+                            </colgroup>
                             <thead class="bg-gray-50">
                                 <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
-                                    <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-                                    <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
+                                    <th scope="col" class="hr-employee-col-name px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="hr-employee-col-email px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                                    <th scope="col" class="hr-employee-col-actions px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="employeeList" class="divide-y divide-gray-100"></tbody>
+                            <tfoot id="employeeListFooter"><tr><td colspan="2">Total Employees</td><td id="employeeListTotal">0</td></tr></tfoot>
                         </table>
                     </div>
                 </div>
@@ -670,35 +678,109 @@
 
         // Employee Management
         async function fetchEmployees() {
-            try {
-                const response = await fetch("/hr/employees");
-                const employees = await response.json();
-                const employeeList = document.getElementById("employeeList");
-                employeeList.innerHTML = "";
+    try {
+        const response = await fetch("/hr/employees");
 
-                if (employees.length === 0) {
-                    employeeList.innerHTML = '<tr><td colspan="3" class="px-6 py-4 text-center text-gray-500">No employees found.</td></tr>';
-                    return;
-                }
-
-                employees.forEach((employee, index) => {
-                    const row = document.createElement("tr");
-                    row.className = "hover:bg-gray-50 transition";
-                    row.innerHTML = `
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(employee.name)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(employee.email)}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <button data-rs-click="hrDashboard-31" data-rs-arg-0="${escapeHtml(employee._id)}" data-rs-arg-1="${escapeHtml(employee.name)}" data-rs-arg-2="${escapeHtml(employee.email)}" class="text-indigo-600 hover:text-indigo-900 font-medium">Edit</button>
-                        </td>
-                    `;
-                    employeeList.appendChild(row);
-                });
-            } catch (error) {
-                console.error("Error fetching employees:", error);
-            }
+        if (!response.ok) {
+            throw new Error(`Employee request failed: ${response.status}`);
         }
 
-        async function addEmployee(event) {
+        const employees = await response.json();
+        const employeeList = document.getElementById("employeeList");
+
+        if (!employeeList) {
+            console.error("Employee table body #employeeList was not found.");
+            return;
+        }
+
+        employeeList.innerHTML = "";
+
+        const totalEl = document.getElementById("employeeListTotal");
+        if (totalEl) {
+            totalEl.textContent = String(
+                Array.isArray(employees) ? employees.length : 0
+            );
+        }
+
+        if (!Array.isArray(employees)) {
+            throw new Error("Invalid employee response.");
+        }
+
+        if (employees.length === 0) {
+            const emptyRow = document.createElement("tr");
+            const emptyCell = document.createElement("td");
+
+            emptyCell.colSpan = 3;
+            emptyCell.className =
+                "hr-employee-empty px-6 py-4 text-center text-gray-500";
+            emptyCell.textContent = "No employees found.";
+
+            emptyRow.appendChild(emptyCell);
+            employeeList.appendChild(emptyRow);
+            return;
+        }
+
+        employees.forEach((employee) => {
+            const employeeId = String(employee._id ?? "");
+            const employeeName = String(employee.name ?? "");
+            const employeeEmail = String(employee.email ?? "");
+
+            const row = document.createElement("tr");
+            row.className = "hr-employee-row hover:bg-gray-50 transition";
+
+            const nameCell = document.createElement("td");
+            nameCell.className = "hr-employee-name";
+            nameCell.textContent = employeeName;
+
+            const emailCell = document.createElement("td");
+            emailCell.className = "hr-employee-email";
+            emailCell.textContent = employeeEmail;
+
+            const actionsCell = document.createElement("td");
+            actionsCell.className = "hr-employee-actions";
+
+            const actionsWrap = document.createElement("span");
+            actionsWrap.className = "hr-employee-actions-wrap";
+
+            const detailsButton = document.createElement("button");
+            detailsButton.type = "button";
+            detailsButton.className = "hr-employee-details-btn";
+            detailsButton.dataset.empDetails = "";
+            detailsButton.dataset.empId = employeeId;
+            detailsButton.dataset.empName = employeeName;
+            detailsButton.dataset.empEmail = employeeEmail;
+            detailsButton.dataset.empDept =
+                String(employee.department || "General");
+            detailsButton.dataset.empStatus =
+                String(employee.status || "Active");
+            detailsButton.textContent = "Details";
+
+            const editButton = document.createElement("button");
+            editButton.type = "button";
+            editButton.setAttribute("aria-label", `Edit ${employeeName}`);
+            editButton.setAttribute("data-rs-click", "hrDashboard-31");
+            editButton.setAttribute("data-rs-arg-0", employeeId);
+            editButton.setAttribute("data-rs-arg-1", employeeName);
+            editButton.setAttribute("data-rs-arg-2", employeeEmail);
+            editButton.className = "hr-employee-edit";
+            editButton.textContent = "Edit";
+
+            actionsWrap.appendChild(detailsButton);
+            actionsWrap.appendChild(editButton);
+            actionsCell.appendChild(actionsWrap);
+
+            row.appendChild(nameCell);
+            row.appendChild(emailCell);
+            row.appendChild(actionsCell);
+
+            employeeList.appendChild(row);
+        });
+    } catch (error) {
+        console.error("Error fetching employees:", error);
+    }
+}
+
+async function addEmployee(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
             const data = Object.fromEntries(formData.entries());
@@ -1545,7 +1627,9 @@
             _annPanelOpen = !_annPanelOpen;
             const panel   = document.getElementById('ann-panel');
             const chevron = document.getElementById('ann-chevron');
+            const toggle  = document.getElementById('ann-toggle-btn');
             if (!panel) return;
+            if (toggle) toggle.setAttribute('aria-expanded', String(_annPanelOpen));
 
             if (_annPanelOpen) {
                 panel.classList.remove('hidden');
@@ -1706,5 +1790,64 @@
 </div>
 <%- include('partials/site-tools') %>
 <div id="rs-dashboard-experience" data-login-token="<%= typeof welcome !== 'undefined' ? welcome.token : '' %>" data-name="<%= typeof welcome !== 'undefined' ? welcome.name : '' %>"></div>
+
+<!-- Employee Details Modal -->
+<div id="employeeDetailsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="emp-detail-title">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="flex items-center justify-between p-6 border-b border-gray-100">
+            <div>
+                <h3 id="emp-detail-title" class="text-base font-bold text-gray-900">Employee Details</h3>
+                <p class="text-xs text-gray-500 mt-0.5">Directory profile summary</p>
+            </div>
+            <button type="button" data-emp-detail-close class="text-gray-400 hover:text-gray-600" aria-label="Close employee details">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-3 text-sm">
+            <div class="flex justify-between gap-4"><span class="text-gray-500">Name</span><strong id="emp-detail-name" class="text-gray-900"></strong></div>
+            <div class="flex justify-between gap-4"><span class="text-gray-500">Email</span><span id="emp-detail-email" class="text-gray-800"></span></div>
+            <div class="flex justify-between gap-4"><span class="text-gray-500">Department</span><span id="emp-detail-dept" class="text-gray-800"></span></div>
+            <div class="flex justify-between gap-4"><span class="text-gray-500">Status</span><span id="emp-detail-status" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600"></span></div>
+            <div class="flex justify-between gap-4"><span class="text-gray-500">Employee ID</span><code id="emp-detail-id" class="text-xs text-gray-500"></code></div>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-100 flex justify-end gap-2">
+            <button type="button" data-emp-detail-close class="px-4 py-2 rounded-lg text-xs font-semibold border border-gray-200 text-gray-600">Close</button>
+            <button type="button" id="emp-detail-edit-btn" class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary-600 text-white">Edit Employee</button>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('click', function(e) {
+    const btn = e.target.closest('[data-emp-details]');
+    if (btn) {
+        const modal = document.getElementById('employeeDetailsModal');
+        const id = btn.getAttribute('data-emp-id') || '';
+        const name = btn.getAttribute('data-emp-name') || '';
+        const email = btn.getAttribute('data-emp-email') || '';
+        document.getElementById('emp-detail-name').textContent = name;
+        document.getElementById('emp-detail-email').textContent = email;
+        document.getElementById('emp-detail-dept').textContent = btn.getAttribute('data-emp-dept') || 'General';
+        document.getElementById('emp-detail-status').textContent = btn.getAttribute('data-emp-status') || 'Active';
+        document.getElementById('emp-detail-id').textContent = id;
+        const editBtn = document.getElementById('emp-detail-edit-btn');
+        editBtn.onclick = function() {
+            modal.classList.add('hidden');
+            if (typeof editEmployee === 'function') editEmployee(id, name, email);
+        };
+        modal.classList.remove('hidden');
+        return;
+    }
+    if (e.target.closest('[data-emp-detail-close]') || e.target.id === 'employeeDetailsModal') {
+        document.getElementById('employeeDetailsModal')?.classList.add('hidden');
+    }
+});
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') document.getElementById('employeeDetailsModal')?.classList.add('hidden');
+});
+</script>
+
+
+
+
 </body>
 </html>

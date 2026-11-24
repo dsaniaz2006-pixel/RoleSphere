@@ -92,3 +92,8 @@ APPLY-HR-DASHBOARD-REFRESH-V2.txt
 
 # Local backups created by the RoleSphere architecture refactor installer
 .rolesphere-refactor-backup/
+
+# ===== RoleSphere local scratch (do not commit) =====
+package.json.before-email-mock
+package.json.before-email-setup.*
+*.before-email-*

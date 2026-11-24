@@ -81,6 +81,12 @@
     "testTimeout": 120000,
     "roots": [
       "<rootDir>/tests"
+    ],
+    "moduleNameMapper": {
+      "^nodemailer$": "<rootDir>/tests/mocks/nodemailer.js"
+    },
+    "setupFiles": [
+      "<rootDir>/tests/setup-email-env.js"
     ]
   }
 }

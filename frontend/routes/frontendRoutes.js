@@ -68,7 +68,10 @@ router.get("/register/:role", (req, res) => {
   const { role } = req.params;
   if (!["Admin", "HR", "Manager", "Employee"].includes(role)) return res.redirect("/register");
   if (role === "Admin") return res.redirect("/login/Admin");
-  res.render("role-register", { role, error: null });
+  const googleNotice = req.session?.googleAuthNotice;
+  const googleError = googleNotice?.role === role ? googleNotice.message : null;
+  if (googleError && req.session) delete req.session.googleAuthNotice;
+  res.render("role-register", { role, error: googleError });
 });
 
 // Use admin routes
