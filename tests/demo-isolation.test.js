@@ -109,6 +109,11 @@ test('demo Mongoose find, count, and aggregate queries are scoped to demo record
   expect(findRows.map(person => person.email)).toEqual(['employee1@rolesphere.demo']);
   expect(count).toBe(1);
   expect(aggregate[0].count).toBe(1);
+
+  const normalAggregate = await Employee.aggregate([
+    { $group: { _id: null, count: { $sum: 1 } } }
+  ]);
+  expect(normalAggregate[0].count).toBe(1);
 });
 
 test('demo sessions cannot modify or delete real production records', async () => {
@@ -135,6 +140,15 @@ test('normal HR sessions retain their existing organization-wide visibility', as
   expect(stats.status).toBe(200);
   expect(stats.body.stats.employeeCount).toBe(1);
   expect(stats.body.stats.managerCount).toBe(0);
+
+  const attemptedDemoEdit = await realHrAgent.put(`/hr/edit-employee/${demoEmployee._id}`)
+    .send({ name: 'Changed by a real account', email: demoEmployee.email });
+  expect(attemptedDemoEdit.status).toBe(404);
+
+  const stillDemo = await runWithDemoContext({ demoKey: DEMO_KEY }, async () =>
+    await Employee.findById(demoEmployee._id).lean()
+  );
+  expect(stillDemo.name).toBe('Demo Employee');
 });
 
 test('demo credentials are shown on role login only when demo mode is enabled', async () => {
