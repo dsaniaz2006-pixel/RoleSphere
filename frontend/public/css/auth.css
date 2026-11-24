@@ -12,3 +12,15 @@
 .google-auth-button:disabled{opacity:.53;cursor:not-allowed}
 .google-auth-mark{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#fff;color:#4285f4;border:1px solid #eae7e3;font-weight:800;font-size:16px;font-family:Arial,sans-serif}
 .google-auth-help{text-align:center;color:#817b74;font-size:10px;line-height:1.6;margin:10px 2px 0}
+
+
+/* Public demo credentials: visible only when DEMO_MODE is enabled. */
+.demo-access-panel{margin:18px 0 8px;padding:15px 16px;border:1px solid #d9d1c7;border-radius:12px;background:linear-gradient(145deg,#f8f6f2,#f1eee8)}
+.demo-access-heading{display:flex;align-items:center;gap:8px;color:#6f6257;font-size:8px;font-weight:700;letter-spacing:1.35px}
+.demo-access-heading .status-dot{width:6px;height:6px;flex:none}
+.demo-access-panel>p{margin:8px 0 12px;color:#867d73;font-size:10px;line-height:1.55}
+.demo-credential-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:7px 0;border-top:1px solid #e5dfd6;font-size:10px}
+.demo-credential-row span{flex:none;color:#948b80}
+.demo-credential-row strong{min-width:0;color:#49433d;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;font-weight:600;text-align:right;overflow-wrap:anywhere}
+.demo-fill-button{width:100%;margin-top:11px;padding:10px 12px;border:1px solid #cfc5b9;border-radius:8px;background:#fff;color:#55483d;font-size:10px;font-weight:600;transition:background .2s,border-color .2s}
+.demo-fill-button:hover{background:#eee9e1;border-color:#b6a696}
