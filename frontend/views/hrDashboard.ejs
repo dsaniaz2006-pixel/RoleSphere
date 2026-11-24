@@ -321,8 +321,8 @@
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center flex-wrap gap-4">
                         <h3 class="text-lg font-bold text-gray-900">Managers</h3>
                     </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full rs-directory-table rs-directory-two">
+                    <div class="overflow-x-auto hr-managers-table-wrap">
+                        <table id="hr-managers-directory" class="w-full rs-directory-table rs-directory-two rs-hr-managers-table" aria-label="Managers directory">
                             <thead class="bg-gray-50">
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Name</th>
@@ -873,8 +873,8 @@ async function addEmployee(event) {
                         if (list) {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${escapeHtml(m.name)}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">${escapeHtml(m.email)}</td>
+                                <td class="hr-manager-name px-6 py-4 text-sm font-medium text-gray-900">${escapeHtml(m.name)}</td>
+                                <td class="hr-manager-email px-6 py-4 text-sm text-gray-600">${escapeHtml(m.email)}</td>
                             `;
                             list.appendChild(tr);
                         }
