@@ -103,7 +103,7 @@ router.post("/add-employee", async (req, res) => {
   const { name, email, role, department, salary, password } = req.body;
 
   try {
-    const existingEmployee = await mongoose.connection.db.collection("Employees").findOne({ email });
+    const existingEmployee = await Employee.findOne({ email }).select("_id").lean();
 
     if (existingEmployee) {
       return res.status(400).json({ error: "Employee already exists" });
@@ -147,11 +147,11 @@ router.put("/edit-employee/:id", async (req, res) => {
     if (password) {
       updateFields.password = await bcrypt.hash(password, 10);
     }
-    const updatedEmployee = await mongoose.connection.db.collection("Employees").findOneAndUpdate(
-      { _id: employeeId, demoKey: null },
+    const updatedEmployee = await Employee.findByIdAndUpdate(
+      employeeId,
       { $set: updateFields },
-      { returnDocument: "after" }
-    );
+      { new: true, runValidators: true }
+    ).select("-password").lean();
 
     if (!updatedEmployee) {
       return res.status(404).json({ error: "Employee not found" });
@@ -280,8 +280,7 @@ router.post("/postAnnouncement", async (req, res) => {
 // Dashboard Stats
 router.get("/stats", async (req, res) => {
   try {
-    const employeeFilter = req.demoMode ? { demoKey: req.demoKey } : { demoKey: null };
-    const employeeCount = await mongoose.connection.db.collection("Employees").countDocuments(employeeFilter);
+    const employeeCount = await Employee.countDocuments({});
     const managerCount = await Manager.countDocuments();
     const pendingLeaves = await EmployeeLeave.countDocuments({ status: 'Pending' });
     const pendingManagerTasks = await Task.countDocuments({ assignedToModel: 'Manager', status: 'Pending' });

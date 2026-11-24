@@ -1,7 +1,7 @@
 'use strict';
 
-// These credentials are intentionally public and read-only. They are for the
-// demo workspace only; real user passwords must never be shared here.
+// These credentials are intentionally public and interactive. They are for
+// the isolated demo workspace only; never reuse them for normal user accounts.
 const DEMO_PASSWORD = 'RoleSphereDemo@2026!';
 const DEMO_ACCOUNTS = Object.freeze({
   Admin: Object.freeze({ email: 'admin@rolesphere.demo', role: 'Admin' }),
