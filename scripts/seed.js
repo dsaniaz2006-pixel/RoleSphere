@@ -27,6 +27,7 @@ const Notification = require('../backend/models/Notification');
 const TaskPlan = require('../backend/models/TaskPlan');
 const TransferRequest = require('../backend/models/TransferRequest');
 const RemovalComplaint = require('../backend/models/RemovalComplaint');
+const { syncExistingDataToDemoSnapshot } = require('./demoSnapshot');
 
 const SEED_CONFIRMATION = 'I_UNDERSTAND_DEMO_DATA_IN_EMPLOYEEMANAGE';
 const ACCOUNT_MODELS = [Admin, HR, Manager, Employee];
@@ -324,13 +325,18 @@ async function seed(env = process.env) {
 
   await mongoose.connect(env.MONGO_URI);
   try {
-    const summary = await runWithSystemContext(() => seedDemoData(password));
+    const summary = await runWithSystemContext(async () => {
+      const base = await seedDemoData(password);
+      const snapshot = await syncExistingDataToDemoSnapshot();
+      return { ...base, snapshot };
+    });
     console.log('Public RoleSphere demo data is ready.');
     console.log('Accounts: 1 Admin, 1 HR, 1 Manager, 1 Employee.');
     console.log('Sample records: attendance, tasks, leave requests, leave balance, review, todos, work report, team, announcement, notifications and approval workflows.');
     console.log('Demo emails: admin@rolesphere.demo; hr1@rolesphere.demo; manager1@rolesphere.demo; employee1@rolesphere.demo');
     console.log(`Shared demo password: ${password}`);
-    console.log('No existing records were deleted. Only records marked with the dedicated demo key were upserted.');
+    console.log('Sanitized live-data snapshot synchronized into the demo scope:', summary.snapshot);
+    console.log('Original records were not modified. Only obsolete records in the dedicated mirror namespace may be removed.');
     return summary;
   } finally {
     await mongoose.disconnect();
