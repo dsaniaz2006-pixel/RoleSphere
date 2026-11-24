@@ -13,6 +13,7 @@ const { body } = require('express-validator');
 const { finish } = require('../middleware/validation');
 const models = { Admin, HR, Manager, Employee };
 const { establishSession } = require("../services/authSession");
+const { runWithSystemContext } = require('../middleware/demoIsolation');
 const getRoleModel = role => typeof role === 'string' && Object.prototype.hasOwnProperty.call(models, role) ? models[role] : null;
 const invalid = (res, role, error, status = 401) => res.status(status).render('role-login', { role, error });
 
@@ -55,14 +56,14 @@ async function login(req, res, next) {
   const Model = getRoleModel(role);
   if (!Model || typeof email !== 'string' || typeof password !== 'string' || !email || !password || password.length > 128) return res.status(400).json({ error: 'Email, password and valid role required' });
   try {
-    const user = await Model.findOne({ email }).select("+password");
+    const user = await runWithSystemContext(async () => await Model.findOne({ email }).select("+password"));
     if (!user || !user.password || !await bcrypt.compare(password, user.password)) {
       // Reveal a different role only after verifying its credentials. Never look up
       // an email alone and disclose its department, or carry a password into a URL.
       const matches = [];
       for (const [candidateRole, Candidate] of Object.entries(models)) {
         if (candidateRole === role) continue;
-        const candidate = await Candidate.findOne({ email }).select('+password');
+        const candidate = await runWithSystemContext(async () => await Candidate.findOne({ email }).select('+password'));
         if (candidate?.password && await bcrypt.compare(password, candidate.password)) matches.push(candidateRole);
       }
       await audit(req, 'login.failure', {}, { attemptedEmail: email, attemptedRole: role, reason: matches.length === 1 ? 'wrong-role' : 'invalid-credentials' });
