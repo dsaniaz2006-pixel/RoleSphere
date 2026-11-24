@@ -142,6 +142,11 @@ test('demo HR can create and update demo records but cannot modify records outsi
   );
   expect(updated.name).toBe('Updated Demo Employee');
 
+  // Restore the shared fixture so later tests remain independent.
+  const restore = await demoHrAgent.put(`/hr/edit-employee/${demoEmployee._id}`)
+    .send({ name: 'Demo Employee', email: demoEmployee.email });
+  expect(restore.status).toBe(200);
+
   const outsideScopeUpdate = await demoHrAgent.put(`/hr/edit-employee/${realEmployee._id}`)
     .send({ name: 'Compromised', email: realEmployee.email });
   expect(outsideScopeUpdate.status).toBe(404);
