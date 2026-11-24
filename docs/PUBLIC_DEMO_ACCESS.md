@@ -44,8 +44,8 @@ Keep the existing Render `MONGO_URI` exactly as it is: it must continue to point
 ## Data isolation and limits
 
 - Demo account login is rejected unless `DEMO_MODE=true`.
-- Demo HTTP reads are filtered by `demoKey` for Mongoose find/count/distinct/aggregate queries. The HR route's legacy direct employee count is scoped explicitly as well.
-- The four demo accounts are read-only. State-changing POST/PUT/PATCH/DELETE requests and legacy state-changing GET paths are rejected; only known read-only POST list endpoints are allowed.
+- Demo HTTP reads are filtered by `demoKey` for Mongoose find/count/distinct/aggregate queries. Normal accounts are filtered to unmarked real records, so they do not see demo users or sample activity. The HR route's legacy direct employee count and edit query are scoped explicitly as well.
+- The four demo accounts are read-only. State-changing POST/PUT/PATCH/DELETE requests and legacy state-changing GET paths are rejected; only known read-only POST list endpoints are allowed. Regular accounts also cannot modify marked demo records through Mongoose query updates.
 - Demo accounts cannot read files from the production uploads directory and are disconnected from live Socket.IO broadcasts.
 - Normal accounts continue using the existing organization-wide behavior.
 - The demo login page exposes the shared credentials only while demo mode is enabled.
