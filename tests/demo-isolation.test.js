@@ -116,20 +116,39 @@ test('demo Mongoose find, count, and aggregate queries are scoped to demo record
   expect(normalAggregate[0].count).toBe(1);
 });
 
-test('demo sessions cannot modify or delete real production records', async () => {
-  const update = await demoHrAgent.put(`/hr/edit-employee/${realEmployee._id}`)
-    .send({ name: 'Compromised', email: realEmployee.email });
-  expect(update.status).toBe(403);
-  expect(update.body.code).toBe('DEMO_READ_ONLY');
-
+test('demo HR can create and update demo records but cannot modify records outside the demo scope', async () => {
   const create = await demoHrAgent.post('/hr/add-employee')
-    .send({ name: 'Injected', email: 'injected@example.test', password: PASSWORD });
-  expect(create.status).toBe(403);
-  expect(await Employee.findOne({ email: 'injected@example.test' })).toBeNull();
+    .send({ name: 'Interactive Demo Employee', email: 'interactive.employee@rolesphere.demo', password: PASSWORD, department: 'Engineering' });
+  expect(create.status).toBe(200);
+
+  const created = await runWithDemoContext({ demoKey: DEMO_KEY }, async () =>
+    await Employee.findOne({ email: 'interactive.employee@rolesphere.demo' }).lean()
+  );
+  expect(created).toBeTruthy();
+  expect(created.demoKey).toBe(DEMO_KEY);
+  expect(created.isDemo).toBe(true);
+
+  const update = await demoHrAgent.put(`/hr/edit-employee/${demoEmployee._id}`)
+    .send({ name: 'Updated Demo Employee', email: demoEmployee.email });
+  expect(update.status).toBe(200);
+
+  const updated = await runWithDemoContext({ demoKey: DEMO_KEY }, async () =>
+    await Employee.findById(demoEmployee._id).lean()
+  );
+  expect(updated.name).toBe('Updated Demo Employee');
+
+  const outsideScopeUpdate = await demoHrAgent.put(`/hr/edit-employee/${realEmployee._id}`)
+    .send({ name: 'Compromised', email: realEmployee.email });
+  expect(outsideScopeUpdate.status).toBe(404);
+
+  const outsideScopeCreateCollision = await demoHrAgent.post('/hr/add-employee')
+    .send({ name: 'Injected', email: realEmployee.email, password: PASSWORD });
+  expect(outsideScopeCreateCollision.status).toBe(400);
 
   const unchanged = await Employee.findById(realEmployee._id).lean();
   expect(unchanged.name).toBe('Real Employee - Must Stay Private');
   expect(unchanged.email).toBe('real.employee@example.test');
+  expect(await Employee.findOne({ email: 'injected@example.test' })).toBeNull();
 });
 
 test('normal HR sessions retain their existing organization-wide visibility', async () => {
