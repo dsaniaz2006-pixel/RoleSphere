@@ -7,6 +7,7 @@ const serveUploads = require('./backend/middleware/serveUploads');
 const { allowedOrigins } = require('./backend/config/allowedOrigins');
 
 const { installDemoIsolation, demoIsolationMiddleware } = require('./backend/middleware/demoIsolation');
+const { DEMO_ACCOUNTS, DEMO_PASSWORD } = require('./backend/config/demoAccounts');
 // Install before route modules import/compile Mongoose models.
 installDemoIsolation(mongoose);
 const { registerRoutes } = require('./backend/http/registerRoutes');
@@ -19,7 +20,13 @@ const { enforceRouteAccess } = require('./backend/middleware/routeAccess');
 // ── App setup ─────────────────────────────────────────────────────────────────
 function createApp({ store } = {}) {
   const app = express();
-  app.use((req, res, next) => { res.locals.googleSignInEnabled = Boolean(require('./backend/services/googleIdentity').config()); next(); });
+  app.use((req, res, next) => {
+    res.locals.googleSignInEnabled = Boolean(require('./backend/services/googleIdentity').config());
+    res.locals.demoEnabled = process.env.DEMO_MODE === 'true';
+    res.locals.demoAccounts = DEMO_ACCOUNTS;
+    res.locals.demoPassword = DEMO_PASSWORD;
+    next();
+  });
   app.locals.jsonForScript = value => JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
 
