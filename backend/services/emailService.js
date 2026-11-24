@@ -1,6 +1,7 @@
 "use strict";
 
 const nodemailer = require("nodemailer");
+const { sendViaGoogleAppsScript } = require("./appsScriptEmail");
 
 // ============================================================
 // 1. EMAIL TRANSPORT CONFIGURATION
@@ -127,6 +128,23 @@ const sendEmail = async ({ to, subject, html, text, type }) => {
   }
 
   try {
+    if (String(process.env.EMAIL_PROVIDER || "").toLowerCase() === "google_apps_script") {
+      const info = await sendViaGoogleAppsScript({
+        to: to.trim(),
+        subject,
+        html,
+        text,
+        type,
+      });
+
+      console.log("[RoleSphere Email] Email accepted by Google Apps Script:", {
+        type,
+        recipient: to.trim(),
+        provider: "google_apps_script",
+      });
+      return info;
+    }
+
     const mailer = createTransporter();
     if (!mailer) {
       return { accepted: [], rejected: [], error: "Email configuration missing" };
