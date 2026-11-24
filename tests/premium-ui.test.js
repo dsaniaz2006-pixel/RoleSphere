@@ -52,19 +52,22 @@ test('every full template includes the global theme and controls',()=>{
  const folder=path.join(root,'frontend/views');
  for(const file of fs.readdirSync(folder).filter(f=>f.endsWith('.ejs'))){const s=fs.readFileSync(path.join(folder,file),'utf8');if(!s.includes('<head>'))continue;expect(s).toContain("include('partials/premium-head')");expect(s).toContain("include('partials/site-tools')");}
 });
-test('HR Managers directory preserves distinct Name and Email columns with scoped layout styles',async()=>{
+test('HR Managers directory renders isolated Name and Email grid columns with search',async()=>{
  const page=new JSDOM(await render('hrDashboard'));const d=page.window.document;
- const table=d.querySelector('#hr-managers-directory');
- expect(table).toBeTruthy();
- expect([...table.tHead.rows[0].cells].map(cell=>cell.textContent.trim())).toEqual(['Name','Email']);
- expect(table.querySelector('#managersList')).toBeTruthy();
- expect(d.querySelector('link[href="/css/hr-dashboard-refinements.css?v=hr-managers-layout-4"]')).toBeTruthy();
+ const directory=d.querySelector('#hr-managers-directory[role="table"]');
+ expect(directory).toBeTruthy();
+ expect([...directory.querySelectorAll('.hr-managers-heading [role="columnheader"]')].map(cell=>cell.textContent.trim())).toEqual(['Name','Email']);
+ expect(directory.querySelector('#managersList[role="rowgroup"]')).toBeTruthy();
+ expect(d.querySelector('#hr-managers-search[type="search"]')).toBeTruthy();
+ expect(d.querySelector('link[href="/css/hr-dashboard-refinements.css?v=hr-managers-grid-5"]')).toBeTruthy();
  const styles=fs.readFileSync(path.join(root,'frontend/public/css/hr-dashboard-refinements.css'),'utf8');
- expect(styles).toContain('#section-managers table#hr-managers-directory');
- expect(styles).toContain('display: table-cell !important');
- expect(styles).toContain('#section-managers .rs-table-tools.rs-legacy-tools');
+ expect(styles).toContain('#section-managers .hr-manager-row');
+ expect(styles).toContain('display: grid !important');
+ expect(styles).toContain('grid-template-columns: minmax(220px, 0.8fr) minmax(300px, 1.2fr) !important');
+ expect(styles).toContain('#section-managers .hr-managers-toolbar');
  page.window.close();
 });
+
 test('empty-state uploads preserve native inputs, selection, removal and reset',async()=>{
  const p=dom(await render('employee-dashboard'));const w=p.window;w.eval(client());await settle();const input=w.document.querySelector('#taskFile');await waitUntil(()=>input.dataset.rsUploadReady==='true','Task upload listener did not initialize');const zone=input.closest('.rs-upload');
  expect(input.required).toBe(true);expect(zone.textContent).toContain('Add your task submission');const click=jest.fn();input.click=click;
