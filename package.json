@@ -23,7 +23,8 @@
     "doctor:https": "node scripts/doctor-https.js",
     "dev:https": "node scripts/launch-https.js",
     "test:https": "jest tests/https.test.js --runInBand",
-    "test:architecture": "jest tests/architecture.test.js tests/realtime-notifications.test.js tests/build-config.test.js --runInBand"
+    "test:architecture": "jest tests/architecture.test.js tests/realtime-notifications.test.js tests/build-config.test.js --runInBand",
+    "seed:demo": "node scripts/seed.js"
   },
   "keywords": [],
   "author": "",

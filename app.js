@@ -6,6 +6,10 @@ const cors        = require("cors");
 const serveUploads = require('./backend/middleware/serveUploads');
 const { allowedOrigins } = require('./backend/config/allowedOrigins');
 
+const { installDemoIsolation, demoIsolationMiddleware } = require('./backend/middleware/demoIsolation');
+const { DEMO_ACCOUNTS, DEMO_PASSWORD } = require('./backend/config/demoAccounts');
+// Install before route modules import/compile Mongoose models.
+installDemoIsolation(mongoose);
 const { registerRoutes } = require('./backend/http/registerRoutes');
 const { createSecurityHeaders } = require('./backend/middleware/securityHeaders');
 const { sameOriginWrites } = require('./backend/middleware/sameOriginWrites');
@@ -16,7 +20,13 @@ const { enforceRouteAccess } = require('./backend/middleware/routeAccess');
 // ── App setup ─────────────────────────────────────────────────────────────────
 function createApp({ store } = {}) {
   const app = express();
-  app.use((req, res, next) => { res.locals.googleSignInEnabled = Boolean(require('./backend/services/googleIdentity').config()); next(); });
+  app.use((req, res, next) => {
+    res.locals.googleSignInEnabled = Boolean(require('./backend/services/googleIdentity').config());
+    res.locals.demoEnabled = process.env.DEMO_MODE === 'true';
+    res.locals.demoAccounts = DEMO_ACCOUNTS;
+    res.locals.demoPassword = process.env.DEMO_PASSWORD || DEMO_PASSWORD;
+    next();
+  });
   app.locals.jsonForScript = value => JSON.stringify(value).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
 
 
@@ -44,6 +54,8 @@ function createApp({ store } = {}) {
 
 
   attachSession(app, { store });
+  // Establish a demo-only async data scope after the session is available and before any route runs.
+  app.use(demoIsolationMiddleware);
   app.get('/healthz', (req, res) => res.json({ status: 'ok' }));
   app.get('/readyz', (req, res) => res.status(mongoose.connection.readyState === 1 ? 200 : 503).json({ ready: mongoose.connection.readyState === 1 }));
   enforceRouteAccess(app);

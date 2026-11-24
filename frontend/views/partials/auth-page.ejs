@@ -2,6 +2,9 @@
 const isRegister = mode === 'register';
 const chosen = selectedRole || null;
 const hint = typeof loginHint !== 'undefined' ? loginHint : null;
+const demoAccessEnabled = typeof demoEnabled !== 'undefined' && demoEnabled === true;
+const demoAccountMap = typeof demoAccounts !== 'undefined' ? demoAccounts : null;
+const demoAccessPassword = typeof demoPassword !== 'undefined' ? demoPassword : '';
 const roles = ['Admin','HR','Manager','Employee'];
 const roleDescriptions = { Admin:'A clear view of the whole organization.', HR:'The people behind a better workplace.', Manager:'Bring your team’s best work together.', Employee:'Your work, progress and possibilities.' };
 let errorText = error || '';
@@ -30,6 +33,15 @@ if (errorText.startsWith('wrong_role:')) errorText = 'Please choose the correct 
  <% if (isRegister) { %><div class="field"><label for="name">Full name</label><input id="name" name="name" type="text" autocomplete="name" placeholder="Your full name" maxlength="100" required></div><% } %>
  <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="username" value="<%= hint ? hint.email : '' %>" placeholder="you@company.com" maxlength="254" required></div>
  <div class="field"><div class="field-label"><label for="password">Password</label><% if (!isRegister) { %><a href="/forgot-password">Forgot password?</a><% } %></div><div class="password-field"><input id="password" name="password" type="password" autocomplete="<%= isRegister ? 'new-password' : 'current-password' %>" placeholder="<%= isRegister ? 'At least 8 characters' : 'Enter your password' %>" <%= isRegister ? 'minlength=8' : '' %> maxlength="128" required><button type="button" class="password-toggle" data-password-toggle="password" aria-controls="password" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
+ <% if (!isRegister && demoAccessEnabled && demoAccountMap && demoAccountMap[chosen]) { const demoAccount = demoAccountMap[chosen]; %>
+ <section class="demo-access-panel" aria-label="Public demo access">
+  <div class="demo-access-heading"><span class="status-dot"></span> PUBLIC DEMO · <%= chosen.toUpperCase() %></div>
+  <p>Explore this workspace with a shared, read-only sample account.</p>
+  <div class="demo-credential-row"><span>Email</span><strong><%= demoAccount.email %></strong></div>
+  <div class="demo-credential-row"><span>Password</span><strong><%= demoAccessPassword %></strong></div>
+  <button class="demo-fill-button" type="button" data-demo-fill data-demo-email="<%= demoAccount.email %>" data-demo-password="<%= demoAccessPassword %>">Fill demo credentials</button>
+ </section>
+ <% } %>
  <% if (isRegister) { %><div class="field"><label for="confirm-password">Confirm password</label><div class="password-field"><input id="confirm-password" type="password" autocomplete="new-password" placeholder="One more time" minlength="8" maxlength="128" required><button type="button" class="password-toggle" data-password-toggle="confirm-password" aria-controls="confirm-password" aria-label="Show confirmation password" aria-pressed="false"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
  <p class="field-help"><% if (chosen === 'Employee') { %>Your account will be active immediately after registration.<% } else { %>Your account will be reviewed by an administrator.<% } %></p>
  </div><% } %>
@@ -63,4 +75,19 @@ if (errorText.startsWith('wrong_role:')) errorText = 'Please choose the correct 
  </section>
 <% } %>
 </main><footer class="auth-footer"><span>© <%= new Date().getFullYear() %> RoleSphere</span><span class="footer-note"><span class="status-dot"></span> Thoughtfully connected.</span><a href="/">Back to home <span aria-hidden="true">↗</span></a></footer><%- include('site-tools') %>
+<script>
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-demo-fill]');
+  if (!button) return;
+  const email = document.getElementById('email');
+  const password = document.getElementById('password');
+  if (!email || !password) return;
+  email.value = button.dataset.demoEmail || '';
+  password.value = button.dataset.demoPassword || '';
+  email.dispatchEvent(new Event('input', { bubbles: true }));
+  password.dispatchEvent(new Event('input', { bubbles: true }));
+  button.textContent = 'Demo credentials filled';
+  email.focus();
+});
+</script>
 </body></html>

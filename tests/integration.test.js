@@ -241,22 +241,6 @@ describe('connected component workspace',()=>{
  });
 });
 
-test('demo seed creates requested dataset and reruns without duplicates', async () => {
-  await mongoose.disconnect();
-  process.env.MONGO_URI = mongo.getUri('rolesphere_demo');
-  process.env.DEMO_PASSWORD = 'IntegrationDemo!1234';
-  const { seed } = require('../scripts/seed');
-  const logs = jest.spyOn(console,'log').mockImplementation(() => {});
-  await seed();
-  const db=mongoose.connection.db;
-  expect(await db.collection('Admin').countDocuments()).toBe(1);
-  expect(await db.collection('HR').countDocuments()).toBe(2);
-  expect(await db.collection('Manager').countDocuments()).toBe(3);
-  expect(await db.collection('Employees').countDocuments()).toBe(20);
-  expect(await db.collection('attendances').countDocuments()).toBe(1500);
-  expect(await db.collection('Tasks').countDocuments()).toBe(80);
-  await seed();
-  expect(await db.collection('Tasks').countDocuments()).toBe(80);
-  expect(await db.collection('Employees').countDocuments()).toBe(20);
-  logs.mockRestore();
-});
+// Safe demo seeding and idempotence are covered by tests/demo-seed.test.js.
+
+

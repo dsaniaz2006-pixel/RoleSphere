@@ -148,7 +148,7 @@ router.put("/edit-employee/:id", async (req, res) => {
       updateFields.password = await bcrypt.hash(password, 10);
     }
     const updatedEmployee = await mongoose.connection.db.collection("Employees").findOneAndUpdate(
-      { _id: employeeId },
+      { _id: employeeId, demoKey: null },
       { $set: updateFields },
       { returnDocument: "after" }
     );
@@ -280,7 +280,8 @@ router.post("/postAnnouncement", async (req, res) => {
 // Dashboard Stats
 router.get("/stats", async (req, res) => {
   try {
-    const employeeCount = await mongoose.connection.db.collection("Employees").countDocuments();
+    const employeeFilter = req.demoMode ? { demoKey: req.demoKey } : { demoKey: null };
+    const employeeCount = await mongoose.connection.db.collection("Employees").countDocuments(employeeFilter);
     const managerCount = await Manager.countDocuments();
     const pendingLeaves = await EmployeeLeave.countDocuments({ status: 'Pending' });
     const pendingManagerTasks = await Task.countDocuments({ assignedToModel: 'Manager', status: 'Pending' });
