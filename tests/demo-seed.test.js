@@ -147,13 +147,13 @@ test('seed is idempotent and leaves unrelated existing records untouched', async
   expect(mirroredEmployee.phone).toBe('');
   expect(mirroredEmployee.address).toBe('');
   expect(mirroredEmployee.department).toBe('Sample Department');
-  const demoManager = await Manager.findOne({ email: DEMO_ACCOUNTS.Manager.email }).lean();
+  const demoManager = await Manager.collection.findOne({ email: DEMO_ACCOUNTS.Manager.email, demoKey: DEMO_KEY });
   expect(String(mirroredEmployee.managerId)).toBe(String(demoManager._id));
   const mirroredManager = await Manager.collection.findOne({ demoKey: DEMO_KEY, demoSeedId: 'mirror:account:Manager:' + String(realManager._id) });
   expect(mirroredManager).toBeTruthy();
   expect(mirroredManager.name).toMatch(/^Sample Manager /);
   expect(mirroredManager.email).toMatch(/^sample\.manager\.[a-f0-9]{8}@demo\.invalid$/);
-  const realHr = await HR.findOne({ email: 'real.hr@example.test' }).lean();
+  const realHr = await HR.collection.findOne({ email: 'real.hr@example.test', demoKey: null });
   const mirroredHr = await HR.collection.findOne({ demoKey: DEMO_KEY, demoSeedId: 'mirror:account:HR:' + String(realHr._id) });
   expect(mirroredHr).toBeTruthy();
   expect(mirroredHr.name).toMatch(/^Sample HR /);
