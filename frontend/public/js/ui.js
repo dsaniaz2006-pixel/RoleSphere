@@ -81,9 +81,6 @@ function installPalette(user) {
   dialog.append(label, results, close); document.body.append(dialog);
   window.openCommandPalette = () => { render(commands); dialog.showModal(); input.focus(); };
   document.addEventListener('keydown', event => { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') { event.preventDefault(); window.openCommandPalette(); } });
-  const link = document.createElement('a'); link.href = '/workspace'; link.textContent = 'Workspace';
-  const search = document.createElement('button'); search.type = 'button'; search.textContent = 'Search (Ctrl+K)'; search.addEventListener('click', window.openCommandPalette);
-  const tools = document.createElement('nav'); tools.setAttribute('aria-label','Workspace tools'); tools.style.cssText = 'position:fixed;bottom:.75rem;left:.75rem;z-index:45;display:flex;gap:.75rem;background:white;color:#111;padding:.5rem;border:1px solid #aaa;border-radius:.5rem'; tools.append(link, search); document.body.append(tools);
 }
 document.addEventListener('DOMContentLoaded', async () => {
   try { const response = await fetch('/api/auth/me', { headers:{ Accept:'application/json' } }); if (!response.ok) return;

@@ -45,6 +45,17 @@ if (errorText.startsWith('wrong_role:')) errorText = 'Please choose the correct 
  <p class="google-auth-help">Google sign-in will be available when the administrator configures Google OAuth.</p>
  <% } %>
  </div>
+ <% } else if (chosen !== 'Admin') { %>
+ <div id="google-register-group">
+ <div class="form-divider"><span>OR REGISTER WITH</span></div>
+ <% if (typeof googleSignInEnabled !== 'undefined' && googleSignInEnabled) { %>
+ <a class="google-auth-button" href="/api/auth/google/start?role=<%= encodeURIComponent(chosen) %>&amp;intent=register" aria-label="Continue with Google to register as <%= chosen %>"><span class="google-auth-mark" aria-hidden="true">G</span> Continue with Google</a>
+ <p class="google-auth-help">Creates a <%= chosen %> account request for administrator approval.</p>
+ <% } else { %>
+ <button type="button" class="google-auth-button" disabled title="Google OAuth setup is required"><span class="google-auth-mark" aria-hidden="true">G</span> Continue with Google</button>
+ <p class="google-auth-help">Google registration will be available when the administrator configures Google OAuth.</p>
+ <% } %>
+ </div>
  <% } %>
  <div class="form-divider"><span>YOUR WORK, TOGETHER</span></div><p class="form-switch"><% if (chosen === 'Admin') { %>Admin access is provided by your organization.<% } else { %><%= isRegister ? 'Already have a workspace?' : 'First time here?' %> <a href="/<%= isRegister ? 'login' : 'register' %>/<%= chosen %>"><%= isRegister ? 'Sign in' : 'Create an account' %> <span aria-hidden="true">↗</span></a><% } %></p>
  </section>

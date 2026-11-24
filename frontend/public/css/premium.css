@@ -165,3 +165,5 @@ html[data-theme="dark"] :where(.section-intro>p:last-child,.role-card p,.role-ca
 .rs-dashboard-reveal>main{animation:none}
 @media(max-width:639px){.sh-brand .rs-brand-name{font-size:20px;letter-spacing:-.8px}.sh-brand{gap:6px!important}.sh-root .rs-brand-mark{width:28px;height:28px;line-height:28px;font-size:23px}.sh-brand .rs-brand-mark>span{font-size:22px}}
 @media(max-width:360px){.sh-brand .rs-brand-name{font-size:18px}.auth-header{padding:18px 16px}.auth-brand{gap:7px}.auth-brand .rs-brand-name{font-size:20px}.auth-brand .rs-brand-mark{width:30px;height:30px;line-height:30px;font-size:23px}.auth-header nav{gap:5px}}
+
+.rs-cmd-trigger,[data-rs-cmd-open]{display:none!important}
