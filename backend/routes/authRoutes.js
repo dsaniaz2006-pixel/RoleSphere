@@ -80,6 +80,11 @@ async function login(req, res, next) {
       return invalid(res, role, matches.length > 1 ? 'These credentials match more than one role. Choose the role you want to use.' : 'Invalid credentials');
     }
     
+    if (user.isDemo === true && process.env.DEMO_MODE !== 'true') {
+      await audit(req, 'login.failure', {}, { attemptedEmail: email, attemptedRole: role, reason: 'demo-mode-disabled' });
+      return invalid(res, role, 'Public demo accounts are currently unavailable.', 403);
+    }
+
     // MODIFIED: Allow Employees to log in immediately without approval. Keep restriction for HR and Manager.
     if (role !== 'Admin' && role !== 'Employee' && (!user.isApproved || user.status !== 'approved')) {
       await audit(req, 'login.failure', {}, { attemptedEmail: email, attemptedRole: role, reason: 'not-approved' });
