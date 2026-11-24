@@ -5,15 +5,6 @@ const { AsyncLocalStorage } = require('node:async_hooks');
 const DEMO_KEY = 'rolesphere-public-demo-v1';
 const context = new AsyncLocalStorage();
 const INSTALL_KEY = Symbol.for('rolesphere.demoIsolation.installed');
-const SAFE_POST_READ_PATHS = new Set([
-  '/employee/getTasks',
-  '/employee/getLeaves',
-  '/employee/getWorkReports',
-  '/employee/getTodos',
-  '/employee/getManagerReports',
-  '/manager/getMyTasks'
-]);
-const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function getDemoContext() {
   return context.getStore() || null;
@@ -201,20 +192,13 @@ function demoIsolationMiddleware(req, res, next) {
     return res.status(404).send('Files are not available in the public demo.');
   }
 
-  // Public demo sessions are intentionally read-only. These POST endpoints
-  // only retrieve lists; every state-changing request remains blocked.
-  if (STATE_CHANGING_METHODS.has(req.method)) {
-    if (req.method !== 'POST' || !SAFE_POST_READ_PATHS.has(req.path)) {
-      return res.status(403).json({
-        success: false,
-        code: 'DEMO_READ_ONLY',
-        error: 'This is a read-only demo account. Changes are disabled.'
-      });
-    }
-  }
+  // Public demo accounts are interactive. Mongoose isolation middleware
+  // scopes all supported reads and writes to this demoKey, so mutations can
+  // operate on demo data without reaching records owned by normal accounts.
 
-  // Block legacy state-changing GET endpoints too.
-  if (req.method === 'GET' && /\/(?:delete|remove|approve|reject|edit|update|reset-password)(?:\/|$)/i.test(req.path)) {
+  // Continue blocking legacy state-changing GET endpoints. Edit pages are
+  // GET navigations and must remain available to demo users.
+  if (req.method === 'GET' && /\/(?:delete|remove|approve|reject|update|reset-password)(?:\/|$)/i.test(req.path)) {
     return res.status(403).json({
       success: false,
       code: 'DEMO_READ_ONLY',
