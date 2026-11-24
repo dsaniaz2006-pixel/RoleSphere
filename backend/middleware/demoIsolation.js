@@ -75,7 +75,7 @@ function demoIsolationPlugin(schema) {
 
     const pipeline = this.pipeline();
     const firstStage = pipeline[0] || {};
-    const mustRemainFirst = ['$search', '$searchMeta', '$vectorSearch', '$geoNear']
+    const mustRemainFirst = ['$search', '$searchMeta', '$vectorSearch', '$geoNear', '$documents']
       .some(stage => Object.prototype.hasOwnProperty.call(firstStage, stage));
     pipeline.splice(mustRemainFirst ? 1 : 0, 0, {
       $match: { demoKey: scope?.demoKey || null }
@@ -96,7 +96,10 @@ function demoIsolationPlugin(schema) {
       this.where({ demoKey: scope?.demoKey || null });
 
       const update = this.getUpdate();
-      if (update && !Array.isArray(update)) {
+      if (Array.isArray(update)) {
+        return next(new Error('Data isolation: update pipelines are disabled outside trusted system operations.'));
+      }
+      if (update) {
         stripReservedFields(update);
 
         if (method === 'replaceOne' || method === 'findOneAndReplace') {
