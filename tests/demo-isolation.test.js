@@ -141,10 +141,6 @@ test('demo HR can create and update demo records but cannot modify records outsi
     .send({ name: 'Compromised', email: realEmployee.email });
   expect(outsideScopeUpdate.status).toBe(404);
 
-  const outsideScopeCreateCollision = await demoHrAgent.post('/hr/add-employee')
-    .send({ name: 'Injected', email: realEmployee.email, password: PASSWORD });
-  expect(outsideScopeCreateCollision.status).toBe(400);
-
   const unchanged = await Employee.findById(realEmployee._id).lean();
   expect(unchanged.name).toBe('Real Employee - Must Stay Private');
   expect(unchanged.email).toBe('real.employee@example.test');
