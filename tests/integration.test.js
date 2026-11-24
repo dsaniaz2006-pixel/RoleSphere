@@ -243,16 +243,4 @@ describe('connected component workspace',()=>{
 
 // Safe demo seeding and idempotence are covered by tests/demo-seed.test.js.
 
-  await seed();
-  const db=mongoose.connection.db;
-  expect(await db.collection('Admin').countDocuments()).toBe(1);
-  expect(await db.collection('HR').countDocuments()).toBe(2);
-  expect(await db.collection('Manager').countDocuments()).toBe(3);
-  expect(await db.collection('Employees').countDocuments()).toBe(20);
-  expect(await db.collection('attendances').countDocuments()).toBe(1500);
-  expect(await db.collection('Tasks').countDocuments()).toBe(80);
-  await seed();
-  expect(await db.collection('Tasks').countDocuments()).toBe(80);
-  expect(await db.collection('Employees').countDocuments()).toBe(20);
-  logs.mockRestore();
-});
+
