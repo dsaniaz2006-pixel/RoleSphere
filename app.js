@@ -6,6 +6,9 @@ const cors        = require("cors");
 const serveUploads = require('./backend/middleware/serveUploads');
 const { allowedOrigins } = require('./backend/config/allowedOrigins');
 
+const { installDemoIsolation, demoIsolationMiddleware } = require('./backend/middleware/demoIsolation');
+// Install before route modules import/compile Mongoose models.
+installDemoIsolation(mongoose);
 const { registerRoutes } = require('./backend/http/registerRoutes');
 const { createSecurityHeaders } = require('./backend/middleware/securityHeaders');
 const { sameOriginWrites } = require('./backend/middleware/sameOriginWrites');
@@ -44,6 +47,8 @@ function createApp({ store } = {}) {
 
 
   attachSession(app, { store });
+  // Establish a demo-only async data scope after the session is available and before any route runs.
+  app.use(demoIsolationMiddleware);
   app.get('/healthz', (req, res) => res.json({ status: 'ok' }));
   app.get('/readyz', (req, res) => res.status(mongoose.connection.readyState === 1 ? 200 : 503).json({ ready: mongoose.connection.readyState === 1 }));
   enforceRouteAccess(app);
