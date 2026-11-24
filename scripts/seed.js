@@ -332,7 +332,7 @@ async function seed(env = process.env) {
     console.log('Accounts: 1 Admin, 1 HR, 1 Manager, 1 Employee.');
     console.log('Sample records: attendance, tasks, leave requests, leave balance, review, todos, work report, team, announcement, notifications and approval workflows.');
     console.log('Demo emails: admin@rolesphere.demo; hr1@rolesphere.demo; manager1@rolesphere.demo; employee1@rolesphere.demo');
-    console.log('Shared demo password: RoleSphereDemo@2026!');
+    console.log(`Shared demo password: ${password}`);
     console.log('No existing records were deleted. Only records marked with the dedicated demo key were upserted.');
     return summary;
   } finally {
