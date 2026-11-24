@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { createApp } = require('../app');
-const { DEMO_KEY, runWithDemoContext } = require('../backend/middleware/demoIsolation');
+const { DEMO_KEY, runWithDemoContext, runWithSystemContext } = require('../backend/middleware/demoIsolation');
 const HR = require('../backend/models/HR');
 const Manager = require('../backend/models/Manager');
 const Employee = require('../backend/models/Employee');
@@ -50,25 +50,27 @@ beforeAll(async () => {
   const hash = await bcrypt.hash(PASSWORD, 4);
   const approved = { password: hash, isApproved: true, status: 'approved' };
 
-  const demoManager = await Manager.create({
-    name: 'Demo Manager', email: 'manager1@rolesphere.demo', ...approved,
-    demoKey: DEMO_KEY, isDemo: true, demoSeedId: 'account:manager1'
-  });
-  demoEmployee = await Employee.create({
-    name: 'Demo Employee', email: 'employee1@rolesphere.demo', managerId: demoManager._id,
-    department: 'Engineering', ...approved,
-    demoKey: DEMO_KEY, isDemo: true, demoSeedId: 'account:employee1'
-  });
-  realEmployee = await Employee.create({
-    name: 'Real Employee - Must Stay Private', email: 'real.employee@example.test',
-    department: 'Operations', password: hash, isApproved: true, status: 'approved'
-  });
-  await HR.create({
-    name: 'Demo HR', email: 'hr1@rolesphere.demo', role: 'HR', ...approved,
-    demoKey: DEMO_KEY, isDemo: true, demoSeedId: 'account:hr1'
-  });
-  await HR.create({
-    name: 'Real HR', email: 'real.hr@example.test', role: 'HR', ...approved
+  await runWithSystemContext(async () => {
+    const demoManager = await Manager.create({
+      name: 'Demo Manager', email: 'manager1@rolesphere.demo', ...approved,
+      demoKey: DEMO_KEY, isDemo: true, demoSeedId: 'account:manager1'
+    });
+    demoEmployee = await Employee.create({
+      name: 'Demo Employee', email: 'employee1@rolesphere.demo', managerId: demoManager._id,
+      department: 'Engineering', ...approved,
+      demoKey: DEMO_KEY, isDemo: true, demoSeedId: 'account:employee1'
+    });
+    realEmployee = await Employee.create({
+      name: 'Real Employee - Must Stay Private', email: 'real.employee@example.test',
+      department: 'Operations', password: hash, isApproved: true, status: 'approved'
+    });
+    await HR.create({
+      name: 'Demo HR', email: 'hr1@rolesphere.demo', role: 'HR', ...approved,
+      demoKey: DEMO_KEY, isDemo: true, demoSeedId: 'account:hr1'
+    });
+    await HR.create({
+      name: 'Real HR', email: 'real.hr@example.test', role: 'HR', ...approved
+    });
   });
   demoHrAgent = await login('hr1@rolesphere.demo', 'HR');
   realHrAgent = await login('real.hr@example.test', 'HR');
@@ -128,10 +130,11 @@ test('demo sessions cannot modify or delete real production records', async () =
 test('normal HR sessions retain their existing organization-wide visibility', async () => {
   const response = await realHrAgent.get('/hr/employees').set(accepted);
   expect(response.status).toBe(200);
-  expect(response.body.map(person => person.email).sort()).toEqual([
-    'employee1@rolesphere.demo',
-    'real.employee@example.test'
-  ]);
+  expect(response.body.map(person => person.email)).toEqual(['real.employee@example.test']);
+  const stats = await realHrAgent.get('/hr/stats').set(accepted);
+  expect(stats.status).toBe(200);
+  expect(stats.body.stats.employeeCount).toBe(1);
+  expect(stats.body.stats.managerCount).toBe(0);
 });
 
 test('demo credentials are shown on role login only when demo mode is enabled', async () => {
