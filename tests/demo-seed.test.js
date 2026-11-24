@@ -8,9 +8,8 @@ const {
   SEED_CONFIRMATION,
   DEFAULT_DEMO_PASSWORD
 } = require('../scripts/seed');
-const { DEMO_KEY, DEMO_ACCOUNTS } = require('../backend/config/demoAccounts')
-  ? { DEMO_KEY: require('../backend/middleware/demoIsolation').DEMO_KEY, DEMO_ACCOUNTS: require('../backend/config/demoAccounts').DEMO_ACCOUNTS }
-  : {};
+const { DEMO_ACCOUNTS } = require('../backend/config/demoAccounts');
+const { DEMO_KEY } = require('../backend/middleware/demoIsolation');
 
 const Admin = require('../backend/models/Admin');
 const HR = require('../backend/models/HR');
