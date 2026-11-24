@@ -60,11 +60,14 @@ function setupSocket(httpServer, sessionMiddleware) {
 
     // Also join a role-based room for broadcasts
     // e.g. io.to("role:HR").emit(...) notifies all HR users
-    if (role) socket.join(`role:${role}`);
+    // Public demo sessions receive only their own demo-scoped notifications, never organization-wide broadcasts.
+    if (role && sessionUser.isDemo !== true) socket.join(`role:${role}`);
 
     console.log(`🔌 Socket connected: ${role} [${userId}] (socketId: ${socket.id})`);
 
-    registerNotificationHandlers(socket, userId);
+    registerNotificationHandlers(socket, userId, undefined, sessionUser.isDemo === true
+      ? { demoKey: sessionUser.demoKey || require('../middleware/demoIsolation').DEMO_KEY }
+      : null);
 
     socket.on("disconnect", (reason) => {
       console.log(`🔌 Socket disconnected: ${role} [${userId}] — reason: ${reason}`);
