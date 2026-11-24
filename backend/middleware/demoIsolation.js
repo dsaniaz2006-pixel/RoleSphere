@@ -5,7 +5,14 @@ const { AsyncLocalStorage } = require('node:async_hooks');
 const DEMO_KEY = 'rolesphere-public-demo-v1';
 const context = new AsyncLocalStorage();
 const INSTALL_KEY = Symbol.for('rolesphere.demoIsolation.installed');
-const SAFE_POST_READ_PATHS = new Set(['/employee/getTasks']);
+const SAFE_POST_READ_PATHS = new Set([
+  '/employee/getTasks',
+  '/employee/getLeaves',
+  '/employee/getWorkReports',
+  '/employee/getTodos',
+  '/employee/getManagerReports',
+  '/manager/getMyTasks'
+]);
 const STATE_CHANGING_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function getDemoContext() {
